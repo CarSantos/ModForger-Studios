@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Google AI Studio App</title>
+    <script>
+      (function() {
+        try {
+          var desc = Object.getOwnPropertyDescriptor(window, 'fetch');
+          if (!desc) {
+            desc = Object.getOwnPropertyDescriptor(Window.prototype, 'fetch');
+          }
+          if (desc && !desc.set) {
+            Object.defineProperty(window, 'fetch', {
+              get: desc.get || function() { return window.fetch; },
+              set: function(v) { console.warn('Ignored fetch override'); },
+              configurable: true,
+              enumerable: desc.enumerable
+            });
+          }
+        } catch (e) {
+            console.warn(e);
+        }
+      })();
+    </script>
+    <script type="module" crossorigin src="/assets/index-lDrFona6.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-DsfSVKMt.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
+
