@@ -1,4 +1,4 @@
-import { LucideIcon, Box, Cuboid, Users, FileJson, Sword, Settings, Zap, Globe, Beaker } from 'lucide-react';
+import { LucideIcon, Box, Cuboid, Users, FileJson, Sword, Settings, Zap, Globe, Beaker, LayoutDashboard, Package, Component, Image as ImageIcon, Crosshair, Sparkles, Wand2 } from 'lucide-react';
 import { ProjectSettings } from './Launcher';
 
 interface SidebarProps {
@@ -9,14 +9,18 @@ interface SidebarProps {
 
 export const Sidebar = ({ projectSettings, activeView, setActiveView }: SidebarProps) => {
   const menuItems = [
-    { name: 'Dashboard', icon: Zap },
+    { name: 'Dashboard', icon: LayoutDashboard },
     { name: 'Blocos', icon: Cuboid },
     { name: 'Itens', icon: Sword },
+    { name: 'Projéteis', icon: Crosshair },
     { name: 'Entidades', icon: Users },
     { name: 'Mundo', icon: Globe },
-    { name: 'Modelos (Blockbench)', icon: Box },
+    { name: 'Encantamentos', icon: Wand2 },
+    { name: 'Efeitos', icon: Sparkles },
+    { name: 'Modelos', icon: Box },
+    { name: 'Texturas', icon: ImageIcon },
     { name: 'Receitas', icon: FileJson },
-    { name: 'Lógica (Nodos)', icon: Zap },
+    { name: 'Lógica (Nodos)', icon: Component },
     { name: 'Sistemas Custom', icon: Beaker },
     { name: 'Configurações', icon: Settings },
   ];

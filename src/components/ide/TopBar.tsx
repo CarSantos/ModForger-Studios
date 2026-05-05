@@ -1,4 +1,4 @@
-import { Play, Code, Bug } from 'lucide-react';
+import { Play, Code, Bug, Github } from 'lucide-react';
 import { ProjectSettings } from './Launcher';
 
 interface TopBarProps {
@@ -19,6 +19,14 @@ export const TopBar = ({ projectSettings }: TopBarProps) => {
       </div>
 
       <div className="flex items-center gap-3">
+        <button 
+          onClick={() => alert("Para abrir no VS Code na AI Studio:\n\n1. Vai ao menu hambúrguer no topo direito da plataforma.\n2. Escolhe 'Export to GitHub' ou 'Export as ZIP'.\n3. Abre no teu VS Code localmente!")}
+          className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold rounded-md bg-white/[0.03] border border-white/10 text-white/70 hover:bg-white/10 hover:text-white transition-colors"
+          title="Exportar para GitHub / VS Code"
+        >
+          <Github size={14} className="text-white" />
+          Exportar (Git/VSCode)
+        </button>
         <button className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold rounded-md bg-white/[0.03] border border-white/10 text-white/70 hover:bg-white/10 hover:text-white transition-colors">
           <Bug size={14} className="text-red-400" />
           Testar

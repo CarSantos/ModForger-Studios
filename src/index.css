@@ -1,1 +1,13 @@
 @import "tailwindcss";
+
+@theme {
+  --color-amber-100: var(--theme-color-100, #fef3c7);
+  --color-amber-200: var(--theme-color-200, #fde68a);
+  --color-amber-300: var(--theme-color-300, #fcd34d);
+  --color-amber-400: var(--theme-color-400, #fbbf24);
+  --color-amber-500: var(--theme-color-500, #f59e0b);
+  --color-amber-600: var(--theme-color-600, #d97706);
+  --color-amber-700: var(--theme-color-700, #b45309);
+  --color-amber-800: var(--theme-color-800, #92400e);
+  --color-amber-900: var(--theme-color-900, #78350f);
+}

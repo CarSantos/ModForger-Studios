@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Beaker, Plus, Settings, Variable, Database, Code2, Droplet, Zap, Maximize, Activity } from 'lucide-react';
 
-export const CustomSystemsEditor = () => {
+export const CustomSystemsEditor = ({ setActiveView }: { setActiveView?: (view: string) => void }) => {
   const [systemName, setSystemName] = useState('Mana');
   const [systemType, setSystemType] = useState('Float');
   const [maxValue, setMaxValue] = useState(100);
@@ -152,66 +152,15 @@ public class ${varClass}Capability {
             </div>
 
             {/* Logic / Rules */}
-            <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 backdrop-blur-sm lg:col-span-2">
-              <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-2">
-                <h3 className="text-white font-bold flex items-center gap-2">
-                  <Zap size={16} className="text-amber-500" />
-                  Lógica de Consumo / Ganho
-                </h3>
-                <button onClick={addRule} className="text-xs bg-white/5 hover:bg-white/10 text-white font-medium px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors">
-                  <Plus size={14} /> Adicionar Regra
-                </button>
-              </div>
-
-              <div className="space-y-3">
-                {rules.map((rule, idx) => (
-                  <div key={rule.id} className="flex flex-col md:flex-row items-start md:items-center gap-4 bg-black/30 p-3 border border-white/5 rounded-xl">
-                    <span className="text-white/40 text-xs font-mono w-6">#{idx + 1}</span>
-                    <div className="flex flex-col flex-1">
-                      <label className="text-[10px] text-white/30 uppercase font-bold tracking-widest mb-1">Gatilho (Item Usado / Ação)</label>
-                      <input 
-                        type="text" 
-                        value={rule.trigger}
-                        onChange={(e) => {
-                          const newRules = [...rules];
-                          newRules[idx].trigger = e.target.value;
-                          setRules(newRules);
-                        }}
-                        className="bg-black/60 border border-white/10 rounded p-1.5 text-sm text-amber-200 outline-none focus:border-amber-500 w-full"
-                        placeholder="Ex: minecraft:ender_pearl, jump"
-                      />
-                    </div>
-                    <div className="flex items-center gap-2 mt-4 md:mt-0">
-                      <select 
-                        value={rule.action}
-                        onChange={(e) => {
-                          const newRules = [...rules];
-                          newRules[idx].action = e.target.value;
-                          setRules(newRules);
-                        }}
-                        className="bg-black/60 border border-white/10 rounded p-1.5 text-sm text-white outline-none focus:border-amber-500"
-                      >
-                        <option value="consume">Consome</option>
-                        <option value="add">Restaura</option>
-                      </select>
-                      <input 
-                        type="number" 
-                        value={rule.amount}
-                        onChange={(e) => {
-                          const newRules = [...rules];
-                          newRules[idx].amount = Number(e.target.value);
-                          setRules(newRules);
-                        }}
-                        className="bg-black/60 border border-white/10 rounded p-1.5 text-sm text-white outline-none focus:border-amber-500 w-16"
-                      />
-                      <span className="text-white/40 text-sm font-medium">{systemName}</span>
-                    </div>
-                  </div>
-                ))}
-                {rules.length === 0 && (
-                  <p className="text-center text-white/30 text-sm py-4">Sem regras definidas. O valor não mudará por ações diretas.</p>
-                )}
-              </div>
+            <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 backdrop-blur-sm lg:col-span-2 flex flex-col items-center justify-center py-12">
+               <Zap size={32} className="text-amber-500 mb-4 opacity-50" />
+               <h3 className="text-white font-bold mb-2">Lógica de Consumo / Ganho (Sistemas Customizados)</h3>
+               <p className="text-white/40 text-sm mb-6 text-center max-w-md">
+                  A forma como a sua variável aumenta ou diminui agora é totalmente gerida através do sistema avançado de nodos.
+               </p>
+               <button onClick={() => setActiveView && setActiveView('Lógica (Nodos)')} className="bg-amber-500 text-black px-6 py-3 rounded-lg font-bold hover:bg-amber-400 transition-colors shadow-[0_0_15px_rgba(245,158,11,0.3)]">
+                  Configurar Lógica em Nodos
+               </button>
             </div>
 
             {/* Code Generator Preview */}

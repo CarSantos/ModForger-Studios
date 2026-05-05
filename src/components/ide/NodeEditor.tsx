@@ -41,21 +41,42 @@ const NODE_PALETTE = [
   { type: 'event', label: 'On Player Login', color: 'text-yellow-400', icon: '👤' },
   { type: 'event', label: 'On Block Break', color: 'text-yellow-400', icon: '⛏️' },
   { type: 'event', label: 'On Entity Spawn', color: 'text-yellow-400', icon: '🥚' },
+  { type: 'event', label: 'On World Tick', color: 'text-yellow-400', icon: '🌍' },
+  { type: 'event', label: 'On System Value Change', color: 'text-yellow-400', icon: '⚡' },
+  { type: 'event', label: 'On Crop Grow / Tick', color: 'text-yellow-400', icon: '🌱' },
   { type: 'condition', label: 'É de dia?', color: 'text-purple-400', icon: '☀️' },
-  { type: 'condition', label: 'Está a andar?', color: 'text-purple-400', icon: '🚶' },
-  { type: 'condition', label: 'Comparar Valores', color: 'text-purple-400', icon: '⚖️' },
+  { type: 'condition', label: 'Está a chover?', color: 'text-purple-400', icon: '🌧️' },
+  { type: 'condition', label: 'Comparar Valores (==, !=, <, >)', color: 'text-purple-400', icon: '⚖️' },
+  { type: 'condition', label: 'Porta Lógica (AND / OR)', color: 'text-purple-400', icon: '🔌' },
+  { type: 'condition', label: 'Tem Item no Inventário?', color: 'text-purple-400', icon: '🎒' },
   { type: 'action', label: 'Explodir', color: 'text-green-400', icon: '💥' },
   { type: 'action', label: 'Dar Item', color: 'text-green-400', icon: '🎁' },
   { type: 'action', label: 'Curar Vida', color: 'text-green-400', icon: '💖' },
-  { type: 'control', label: 'Loop (Repetir)', color: 'text-red-400', icon: '🔁' },
+  { type: 'action', label: 'Aplicar Efeito de Poção', color: 'text-green-400', icon: '🧪' },
+  { type: 'action', label: 'Dar Dano (Custom)', color: 'text-green-400', icon: '🩸' },
+  { type: 'action', label: 'Tocar Som', color: 'text-green-400', icon: '🎵' },
+  { type: 'action', label: 'Spawn Entidade', color: 'text-green-400', icon: '🐎' },
+  { type: 'action', label: 'Enviar Mensagem Chat', color: 'text-green-400', icon: '💬' },
+  { type: 'action', label: 'Spawn Partícula', color: 'text-green-400', icon: '✨' },
+  { type: 'action', label: 'Set/Change Bloco', color: 'text-green-400', icon: '🧱' },
+  { type: 'action', label: 'Alterar Valor Custom (P/ Sistemas)', color: 'text-green-400', icon: '📈' },
+  { type: 'control', label: 'Loop (Repetir N vezes)', color: 'text-red-400', icon: '🔁' },
+  { type: 'control', label: 'Para Cada (Entidade no Raio)', color: 'text-red-400', icon: '🎯' },
   { type: 'control', label: 'Delay (Esperar)', color: 'text-red-400', icon: '⏳' },
+  { type: 'control', label: 'Cancelar Evento Original', color: 'text-red-400', icon: '❌' },
   { type: 'data_math', label: 'Somar (+)', color: 'text-blue-400', icon: '➕' },
+  { type: 'data_math', label: 'Subtrair (-)', color: 'text-blue-400', icon: '➖' },
+  { type: 'data_math', label: 'Multiplicar (*)', color: 'text-blue-400', icon: '✖️' },
+  { type: 'data_math', label: 'Dividir (/)', color: 'text-blue-400', icon: '➗' },
   { type: 'data_math', label: 'Número Aleatório', color: 'text-blue-400', icon: '🎲' },
-  { type: 'variable', label: 'Vida atual', color: 'text-orange-400', icon: '❤️' },
-  { type: 'variable', label: 'Nome do jogador', color: 'text-orange-400', icon: '👤' },
-  { type: 'variable', label: 'Get/Set Var', color: 'text-orange-400', icon: '💾' },
+  { type: 'data_math', label: 'Bool: True/False', color: 'text-blue-400', icon: '🔘' },
+  { type: 'variable', label: 'Vida atual do Alvo', color: 'text-orange-400', icon: '❤️' },
+  { type: 'variable', label: 'Nome do Jogador', color: 'text-orange-400', icon: '👤' },
+  { type: 'variable', label: 'Coordenadas (Acesso XYZ)', color: 'text-orange-400', icon: '📍' },
+  { type: 'variable', label: 'Get/Set Var Global', color: 'text-orange-400', icon: '💾' },
   { type: 'ai', label: 'Gerar Lógica (IA Text)', color: 'text-pink-400', icon: '✨' },
   { type: 'api', label: 'Se Mod X Ativo', color: 'text-cyan-400', icon: '🧩' },
+  { type: 'api', label: 'Run Curios/Baubles Event', color: 'text-cyan-400', icon: '💍' },
 ];
 
 function DnDFlow() {
@@ -87,6 +108,11 @@ function DnDFlow() {
     },
     [nodes, edges, setEdges],
   );
+
+  const onNodesDelete = useCallback(() => {
+    // This is fired when pressing Backspace or Delete
+    compileCode([...nodes], [...edges]);
+  }, [nodes, edges]);
 
   const onDragOver = useCallback((event: DragEvent) => {
     event.preventDefault();
@@ -299,10 +325,11 @@ function DnDFlow() {
 
       events.forEach(ev => {
           let eventName = "onEvent";
-          if (ev.data.label === 'Ao interagir') eventName = "onPlayerInteract";
-          if (ev.data.label === 'Ao atacar') eventName = "onEntityAttack";
-          if (ev.data.label.includes('Login')) eventName = "onPlayerLogin";
-          if (ev.data.label.includes('Break')) eventName = "onBlockBreak";
+          const label = String(ev.data.label || '');
+          if (label === 'Ao interagir') eventName = "onPlayerInteract";
+          if (label === 'Ao atacar') eventName = "onEntityAttack";
+          if (label.includes('Login')) eventName = "onPlayerLogin";
+          if (label.includes('Break')) eventName = "onBlockBreak";
           
           javaCode += `    public void ${eventName}(Event event) {\n`;
           
@@ -410,7 +437,17 @@ function DnDFlow() {
         
         {/* Context-aware suggestions */}
         {selectedNode && (
-          <div className="p-4 border-t border-white/5 bg-purple-500/5">
+          <div className="p-4 border-t border-white/5 bg-purple-500/5 relative">
+            <button 
+              onClick={() => {
+                setNodes(nds => nds.filter(n => n.id !== selectedNode.id));
+                setSelectedNode(null);
+              }}
+              className="absolute top-2 right-2 text-white/30 hover:text-red-500 transition-colors"
+              title="Delete Node (Backspace/Delete)"
+            >
+              ⨯
+            </button>
             <h4 className="text-xs font-bold text-purple-400 flex items-center gap-2 mb-3">
               <Sparkles size={14} />
               Sugestões Rápidas
@@ -453,6 +490,7 @@ function DnDFlow() {
           edges={edges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
+          onNodesDelete={onNodesDelete}
           onConnect={onConnect}
           onConnectEnd={onConnectEnd}
           onDrop={onDrop}

@@ -1,7 +1,7 @@
 import { useState, DragEvent } from 'react';
 import { Globe, Map, Mountain, Upload, Sparkles, Moon, Sun, Trees, Droplets, Droplets as DropletDrop } from 'lucide-react';
 
-export const WorldEditor = () => {
+export const WorldEditor = ({ setActiveView }: { setActiveView?: (view: string) => void }) => {
   const [activeTab, setActiveTab] = useState('biomes');
 
   // Biome state
@@ -9,18 +9,22 @@ export const WorldEditor = () => {
   const [waterColor, setWaterColor] = useState('#3F76E4');
   const [treeDensity, setTreeDensity] = useState(5);
   const [temperature, setTemperature] = useState(0.5);
+  const [surfaceBlock, setSurfaceBlock] = useState('minecraft:grass_block');
+  const [liquidBlock, setLiquidBlock] = useState('minecraft:water');
 
   // Dimension state
   const [skyColor, setSkyColor] = useState('#78A7FF');
   const [genType, setGenType] = useState('default');
   const [portalBlock, setPortalBlock] = useState('minecraft:obsidian');
+  const [dimensionBiomes, setDimensionBiomes] = useState(['minecraft:plains']);
 
   // Structure state
-  const [structures, setStructures] = useState<{name: string, rarity: number}[]>([]);
+  const [structures, setStructures] = useState<{name: string, rarity: number, biomes: string[]}[]>([]);
   const [dragActive, setDragActive] = useState(false);
 
   // Event state
   const [eventName, setEventName] = useState('Blood Moon');
+  const [eventTrigger, setEventTrigger] = useState('TickEvent.WorldTickEvent');
   const [eventSkyColor, setEventSkyColor] = useState('#AA0000');
   const [mobSpawnMultiplier, setMobSpawnMultiplier] = useState(3.0);
 
@@ -30,7 +34,7 @@ export const WorldEditor = () => {
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const newStructures = Array.from(e.dataTransfer.files)
         .filter((f: File) => f.name.endsWith('.nbt') || f.name.endsWith('.schem'))
-        .map((f: File) => ({ name: f.name, rarity: 50 }));
+        .map((f: File) => ({ name: f.name, rarity: 50, biomes: ['minecraft:plains'] }));
       setStructures([...structures, ...newStructures]);
     }
   };
@@ -79,6 +83,27 @@ export const WorldEditor = () => {
                 <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 backdrop-blur-sm">
                   <h3 className="text-white font-bold mb-4 border-b border-white/5 pb-2">Propriedades do Bioma</h3>
                   <div className="space-y-5">
+                    <div>
+                      <label className="block text-xs font-semibold text-white/60 mb-1">Tipo de Geometria/Topologia Base</label>
+                      <select className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none cursor-pointer">
+                        <option value="plains">Planície (Flat)</option>
+                        <option value="mountains">Montanhosa (Elevado e íngreme)</option>
+                        <option value="ocean">Oceano (Fundo e coberto por água)</option>
+                        <option value="river">Rio (Baixa elevação, cruzamento d'água)</option>
+                        <option value="island">Ilha (Cercado de água)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-white/60 mb-1">Bloco de Superfície</label>
+                      <input type="text" value={surfaceBlock} onChange={(e) => setSurfaceBlock(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none" placeholder="Ex: minecraft:grass_block" />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-xs font-semibold text-white/60 mb-1">Fluído Principal (Lagos/Oceanos)</label>
+                      <input type="text" value={liquidBlock} onChange={(e) => setLiquidBlock(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none" placeholder="Ex: minecraft:water ou minecraft:lava" />
+                    </div>
+
                     <div className="flex items-center gap-4">
                       <div className="flex-1 space-y-1">
                         <label className="block text-xs font-semibold text-white/60">Cor da Relva</label>
@@ -101,12 +126,21 @@ export const WorldEditor = () => {
                         <span className="flex items-center gap-1"><Trees size={14} /> Densidade de Árvores</span>
                         <span className="text-amber-500">{treeDensity}%</span>
                       </label>
-                      <input type="range" min="0" max="100" value={treeDensity} onChange={(e) => setTreeDensity(Number(e.target.value))} className="w-full accent-amber-500" />
+                      <input type="range" min="0" max="100" value={treeDensity} onChange={(e) => setTreeDensity(Number(e.target.value))} className="w-full accent-amber-500 mb-2" />
+                      <input type="text" placeholder="Ex: minecraft:oak_sapling ou id customizado" className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-xs text-white focus:border-amber-500 outline-none" title="Que tipo de árvore gerar" />
+                    </div>
+
+                    <div>
+                      <label className="flex items-center gap-2 text-sm text-white/80 cursor-pointer">
+                        <input type="checkbox" defaultChecked className="accent-amber-500 w-4 h-4 rounded" />
+                        <DropletDrop size={14} className="text-blue-400" />
+                        Gerar Lagos de Água e Rios menores (Water Features)
+                      </label>
                     </div>
 
                     <div>
                       <label className="block text-xs font-semibold text-white/60 mb-1 flex justify-between">
-                        <span className="flex items-center gap-1"><Sun size={14} /> Temperatura</span>
+                        <span className="flex items-center gap-1"><Sun size={14} /> Temperatura (Afeta chuva/neve)</span>
                         <span className="text-amber-500">{temperature.toFixed(2)}</span>
                       </label>
                       <input type="range" min="-1.0" max="2.0" step="0.05" value={temperature} onChange={(e) => setTemperature(Number(e.target.value))} className="w-full accent-amber-500" />
@@ -154,6 +188,35 @@ export const WorldEditor = () => {
                       <label className="block text-xs font-semibold text-white/60 mb-1">Bloco do Portal (Ignitor/Frame)</label>
                       <input type="text" value={portalBlock} onChange={(e) => setPortalBlock(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none" placeholder="Ex: minecraft:glowstone" />
                     </div>
+                    
+                    <div>
+                      <label className="block text-xs font-semibold text-white/60 mb-1">Método de Viagem</label>
+                      <select className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none cursor-pointer">
+                         <option value="portal">Atravessar Portal no Mundo (Estilo Nether)</option>
+                         <option value="item">Usar um Item/Key (Estilo Twilight Forest)</option>
+                         <option value="bed">Dormir na Cama (Estilo Aether / Pesadelo)</option>
+                         <option value="fall">Cair no Vazio (Void)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-white/60 mb-1">Biomas Permitidos</label>
+                      <div className="flex gap-2 mb-2">
+                        <input type="text" id="add-dim-biome-input" className="flex-1 bg-black/40 border border-white/10 rounded-lg p-2 text-sm text-white focus:border-amber-500 outline-none" placeholder="minecraft:desert" />
+                        <button onClick={() => {
+                          const val = (document.getElementById('add-dim-biome-input') as HTMLInputElement).value;
+                          if (val && !dimensionBiomes.includes(val)) setDimensionBiomes([...dimensionBiomes, val]);
+                        }} className="bg-amber-500 text-black px-3 rounded-lg text-sm font-bold hover:bg-amber-400">Add</button>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {dimensionBiomes.map(b => (
+                          <span key={b} className="bg-amber-500/10 text-amber-500 border border-amber-500/20 text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                            {b}
+                            <button onClick={() => setDimensionBiomes(dimensionBiomes.filter(x => x !== b))} className="hover:text-amber-300 ml-1">×</button>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -181,7 +244,7 @@ export const WorldEditor = () => {
                     <span className="text-xs text-white/30 mt-1">Geração via WorldEdit ou nativa</span>
                     <input type="file" accept=".nbt,.schem" multiple className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" onChange={(e) => {
                       if (e.target.files) {
-                        const newStructures = Array.from(e.target.files).map((f: File) => ({ name: f.name, rarity: 50 }));
+                        const newStructures = Array.from(e.target.files).map((f: File) => ({ name: f.name, rarity: 50, biomes: ['minecraft:plains'] }));
                         setStructures([...structures, ...newStructures]);
                       }
                     }}/>
@@ -195,14 +258,46 @@ export const WorldEditor = () => {
                       <div className="text-center py-8 text-white/30 text-sm">Nenhuma estrutura carregada.</div>
                     ) : (
                       structures.map((struct, idx) => (
-                        <div key={idx} className="bg-black/40 border border-white/5 rounded-lg p-3 flex flex-col gap-2">
-                          <div className="flex items-center justify-between">
+                        <div key={idx} className="bg-black/40 border border-white/5 rounded-lg p-3 flex flex-col gap-2 relative">
+                          <button onClick={() => setStructures(structures.filter((_, i) => i !== idx))} className="absolute top-2 right-2 text-white/20 hover:text-red-400 text-xs">⨯ Remover</button>
+                          <div className="flex items-center justify-between mt-2">
                             <span className="font-mono text-xs text-amber-400">{struct.name}</span>
-                            <span className="text-[10px] text-white/40 uppercase">Spawn Rarity</span>
+                            <span className="text-[10px] text-white/40 uppercase">Rarity / Biomes</span>
                           </div>
                           <div className="flex items-center gap-3">
-                            <input type="range" min="1" max="1000" defaultValue={struct.rarity} className="flex-1 accent-amber-500" />
+                            <input type="range" min="1" max="1000" value={struct.rarity} onChange={(e) => {
+                               const newStructs = [...structures];
+                               newStructs[idx].rarity = Number(e.target.value);
+                               setStructures(newStructs);
+                            }} className="flex-1 accent-amber-500" />
                             <span className="text-xs text-white/50 w-12 text-right">1 in {struct.rarity}</span>
+                          </div>
+                          <div className="mt-2 pt-2 border-t border-white/5">
+                            <div className="flex gap-2">
+                              <input type="text" placeholder="minecraft:forest" className="flex-1 bg-black/40 border border-white/10 rounded px-2 py-1 text-xs text-white focus:border-amber-500 outline-none" onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  const val = e.currentTarget.value;
+                                  if (val && !struct.biomes.includes(val)) {
+                                    const newStructs = [...structures];
+                                    newStructs[idx].biomes.push(val);
+                                    setStructures(newStructs);
+                                    e.currentTarget.value = '';
+                                  }
+                                }
+                              }}/>
+                            </div>
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {struct.biomes.map((b, bIdx) => (
+                                <span key={bIdx} className="bg-white/5 text-white/60 text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1">
+                                  {b}
+                                  <button onClick={() => {
+                                    const newStructs = [...structures];
+                                    newStructs[idx].biomes = newStructs[idx].biomes.filter(x => x !== b);
+                                    setStructures(newStructs);
+                                  }} className="hover:text-red-400">×</button>
+                                </span>
+                              ))}
+                            </div>
                           </div>
                         </div>
                       ))
@@ -222,6 +317,20 @@ export const WorldEditor = () => {
                       <input type="text" value={eventName} onChange={(e) => setEventName(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none" />
                     </div>
 
+                    <div>
+                      <label className="block text-xs font-semibold text-white/60 mb-1">Trigger Base (O que despoleto o evento?)</label>
+                      <select value={eventTrigger} onChange={(e) => setEventTrigger(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none cursor-pointer mb-2">
+                        <option value="TickEvent.WorldTickEvent">A cada Tick do Mundo</option>
+                        <option value="LevelEvent.Load">Quando o Mundo é Carregado</option>
+                        <option value="WeatherChangeEvent">Quando Clima Muda (WeatherChange)</option>
+                        <option value="SleepFinishedTimeEvent">Ao Acordar (TimeChange)</option>
+                        <option value="CustomNodeLogic">Apenas Ativado por Nodos</option>
+                      </select>
+                      <button onClick={() => setActiveView && setActiveView('Lógica (Nodos)')} className="w-full bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-500/30 text-indigo-200 p-2 text-sm font-bold rounded flex items-center justify-center gap-2 transition-all cursor-pointer">
+                         <Sparkles size={16} /> Abrir Lógica Avançada p/ este Evento
+                      </button>
+                    </div>
+
                     <div className="space-y-1">
                        <label className="block text-xs font-semibold text-white/60">Modificador do Céu (Durante o Evento)</label>
                        <div className="flex items-center gap-2">
@@ -237,6 +346,20 @@ export const WorldEditor = () => {
                       </label>
                       <input type="range" min="0" max="10" step="0.1" value={mobSpawnMultiplier} onChange={(e) => setMobSpawnMultiplier(Number(e.target.value))} className="w-full accent-amber-500" />
                     </div>
+
+                    <div className="border-t border-white/5 pt-4">
+                      <label className="block text-[10px] font-semibold text-white/60 mb-2 uppercase tracking-widest">Substituições Globais de Texturas</label>
+                      <div className="grid grid-cols-2 gap-4">
+                         <div>
+                            <label className="block text-[10px] font-semibold text-white/40 mb-1">Textura do Sol</label>
+                            <input type="text" placeholder="Ex: mod:textures/environment/sun.png" className="w-full bg-black/40 border border-white/10 rounded p-2 text-xs text-white outline-none" />
+                         </div>
+                         <div>
+                            <label className="block text-[10px] font-semibold text-white/40 mb-1">Textura da Lua</label>
+                            <input type="text" placeholder="Ex: mod:textures/environment/moon.png" className="w-full bg-black/40 border border-white/10 rounded p-2 text-xs text-white outline-none" />
+                         </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -249,8 +372,8 @@ export const WorldEditor = () => {
                   
                   <div className="flex-1 bg-[#0F0F13] p-4 rounded-xl border border-white/5 font-mono text-[11px] text-white/60 overflow-y-auto">
                      <span className="text-pink-400">@SubscribeEvent</span><br/>
-                     <span className="text-pink-400">public void</span> <span className="text-blue-300">onWorldTick</span>(TickEvent.WorldTickEvent <span className="text-orange-300">event</span>) {'{'}<br/>
-                     &nbsp;&nbsp;&nbsp;&nbsp;<span className="text-pink-400">if</span> (event.world.isNight() && isBloodMoonActive()) {'{'}<br/>
+                     <span className="text-pink-400">public void</span> <span className="text-blue-300">onWorldEvent</span>({eventTrigger} <span className="text-orange-300">event</span>) {'{'}<br/>
+                     &nbsp;&nbsp;&nbsp;&nbsp;<span className="text-pink-400">if</span> (event.world.isNight() && is{eventName.replace(/\s+/g,'')}Active()) {'{'}<br/>
                      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;event.world.setSkyColor(<span className="text-amber-300">"{eventSkyColor}"</span>);<br/>
                      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MobSpawnManager.setMultiplier(<span className="text-amber-300">{mobSpawnMultiplier}f</span>);<br/>
                      &nbsp;&nbsp;&nbsp;&nbsp;{'}'} <span className="text-pink-400">else</span> {'{'}<br/>

@@ -1,16 +1,25 @@
 import { useState } from 'react';
 import { Sidebar } from './components/ide/Sidebar';
 import { TopBar } from './components/ide/TopBar';
-import { EditorArea } from './components/ide/EditorArea';
+import { BlockEditor } from './components/ide/BlockEditor';
+import { ItemEditor } from './components/ide/ItemEditor';
 import { EntityEditor } from './components/ide/EntityEditor';
 import { WorldEditor } from './components/ide/WorldEditor';
+import { RecipeEditor } from './components/ide/RecipeEditor';
 import { CustomSystemsEditor } from './components/ide/CustomSystemsEditor';
 import { NodeEditor } from './components/ide/NodeEditor';
+import { ModelEditor } from './components/ide/ModelEditor';
+import { SettingsEditor } from './components/ide/SettingsEditor';
+import { DashboardView } from './components/ide/DashboardView';
+import { TextureEditor } from './components/ide/TextureEditor';
+import { ProjectileEditor } from './components/ide/ProjectileEditor';
+import { EnchantmentEditor } from './components/ide/EnchantmentEditor';
+import { EffectEditor } from './components/ide/EffectEditor';
 import { Launcher, ProjectSettings } from './components/ide/Launcher';
 
 export default function App() {
   const [projectSettings, setProjectSettings] = useState<ProjectSettings | null>(null);
-  const [activeView, setActiveView] = useState('Lógica (Nodos)');
+  const [activeView, setActiveView] = useState('Dashboard');
 
   if (!projectSettings) {
     return <Launcher onStartProject={setProjectSettings} />;
@@ -21,10 +30,20 @@ export default function App() {
       <Sidebar projectSettings={projectSettings} activeView={activeView} setActiveView={setActiveView} />
       <div className="flex flex-col flex-1">
         <TopBar projectSettings={projectSettings} />
-        {activeView === 'Entidades' ? <EntityEditor /> : 
-         activeView === 'Mundo' ? <WorldEditor /> : 
-         activeView === 'Lógica (Nodos)' ? <NodeEditor /> :
-         activeView === 'Sistemas Custom' ? <CustomSystemsEditor /> : <EditorArea />}
+        {activeView === 'Dashboard' && <DashboardView projectSettings={projectSettings} setProjectSettings={setProjectSettings} />}
+        {activeView === 'Blocos' && <BlockEditor setActiveView={setActiveView} />}
+        {activeView === 'Itens' && <ItemEditor setActiveView={setActiveView} />}
+        {activeView === 'Projéteis' && <ProjectileEditor />}
+        {activeView === 'Entidades' && <EntityEditor setActiveView={setActiveView} />}
+        {activeView === 'Mundo' && <WorldEditor setActiveView={setActiveView} />}
+        {activeView === 'Encantamentos' && <EnchantmentEditor setActiveView={setActiveView} />}
+        {activeView === 'Efeitos' && <EffectEditor setActiveView={setActiveView} />}
+        {activeView === 'Modelos' && <ModelEditor />}
+        {activeView === 'Texturas' && <TextureEditor />}
+        {activeView === 'Receitas' && <RecipeEditor />}
+        {activeView === 'Lógica (Nodos)' && <NodeEditor />}
+        {activeView === 'Sistemas Custom' && <CustomSystemsEditor setActiveView={setActiveView} />}
+        {activeView === 'Configurações' && <SettingsEditor projectSettings={projectSettings} setProjectSettings={setProjectSettings} />}
       </div>
     </div>
   );

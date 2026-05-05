@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Sparkles, Box, FileCode2, Info, Plus, Trash2 } from 'lucide-react';
+import { Sparkles, Box, FileCode2, Info, Plus, Trash2, Skull, Heart, Droplets } from 'lucide-react';
 
-export const EntityEditor = () => {
+export const EntityEditor = ({ setActiveView }: { setActiveView?: (view: string) => void }) => {
+  const [entityType, setEntityType] = useState('hostile'); // hostile, passive, neutral, boss
   const [health, setHealth] = useState(20);
   const [damage, setDamage] = useState(3);
   const [speed, setSpeed] = useState(0.25);
@@ -10,10 +11,26 @@ export const EntityEditor = () => {
   const [canFly, setCanFly] = useState(false);
   const [canRun, setCanRun] = useState(true);
   const [canJump, setCanJump] = useState(true);
+  const [isAquatic, setIsAquatic] = useState(false);
+
+  // Mountable
+  const [isMountable, setIsMountable] = useState(false);
+  const [needsSaddle, setNeedsSaddle] = useState(false);
+  const [steerItem, setSteerItem] = useState('');
+
+  // Immunities
+  const [immuneFire, setImmuneFire] = useState(false);
+  const [immuneFall, setImmuneFall] = useState(false);
+  const [immuneDrown, setImmuneDrown] = useState(false);
+  const [immunePoison, setImmunePoison] = useState(false);
+  const [immuneWither, setImmuneWither] = useState(false);
+  const [immuneLightning, setImmuneLightning] = useState(false);
 
   const [biomes, setBiomes] = useState<string[]>(['plains']);
-  const [drops, setDrops] = useState<{item: string, chance: number, min: number, max: number}[]>([
-    { item: 'minecraft:bone', chance: 100, min: 1, max: 2 }
+  const [customBiome, setCustomBiome] = useState('');
+  
+  const [drops, setDrops] = useState<{item: string, chance: number, min: number, max: number, condition: string}[]>([
+    { item: 'minecraft:bone', chance: 100, min: 1, max: 2, condition: 'always' }
   ]);
 
   const [dragActive, setDragActive] = useState(false);
@@ -44,8 +61,15 @@ export const EntityEditor = () => {
     setBiomes(prev => prev.includes(biome) ? prev.filter(b => b !== biome) : [...prev, biome]);
   };
 
+  const addCustomBiome = () => {
+    if (customBiome && !biomes.includes(customBiome)) {
+      setBiomes(prev => [...prev, customBiome]);
+      setCustomBiome('');
+    }
+  };
+
   const addDrop = () => {
-    setDrops([...drops, { item: 'minecraft:dirt', chance: 50, min: 1, max: 1 }]);
+    setDrops([...drops, { item: 'minecraft:dirt', chance: 50, min: 1, max: 1, condition: 'always' }]);
   };
 
   const updateDrop = (index: number, field: string, value: any) => {
@@ -83,6 +107,9 @@ public class CustomEntity extends Mob {
 
     // Configurações de Locomoção:
     // Padrões implementados no PathNavigation (Swim: ${canSwim}, Fly: ${canFly})
+    
+    // Tipo: ${entityType}
+    // Imunidades: Fire(${immuneFire}), Fall(${immuneFall}), Drown(${immuneDrown})
 
     public static void registerSpawns() {
         SpawnPlacements.register(
@@ -117,41 +144,55 @@ ${drops.length > 0 ? drops.map(d => `    // - ${d.item} (Chance: ${d.chance}%, M
             {/* Left Column: Properties */}
             <div className="lg:col-span-1 space-y-6">
               
+              <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 backdrop-blur-sm relative overflow-hidden">
+                 <h3 className="text-white font-bold mb-4 border-b border-white/5 pb-2">Tipo de Entidade</h3>
+                 <select value={entityType} onChange={e => setEntityType(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none cursor-pointer">
+                    <option value="hostile">Hostil (Monstro)</option>
+                    <option value="passive">Pacífica (Animal base)</option>
+                    <option value="neutral">Neutra (Ataca se atacada)</option>
+                    <option value="boss">Boss (Barra de vida visível)</option>
+                 </select>
+              </div>
+
               {/* Atributos Base */}
               <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 backdrop-blur-sm relative overflow-hidden">
                 <h3 className="text-white font-bold mb-4 border-b border-white/5 pb-2">Atributos Base</h3>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-xs font-semibold text-white/60 mb-1 flex justify-between">
-                      <span>Vida Máxima (HP)</span>
-                      <span className="text-amber-500">{health}</span>
-                    </label>
-                    <input type="range" min="1" max="100" value={health} onChange={(e) => setHealth(Number(e.target.value))} className="w-full accent-amber-500" />
+                     <label className="block text-xs font-semibold text-white/60 mb-1 flex justify-between">
+                       <span>Vida Máxima (HP) {entityType === 'boss' && '(Sem Limites)'}</span>
+                       <span className="text-amber-500">{health}</span>
+                     </label>
+                     {entityType === 'boss' ? (
+                       <input type="number" value={health} onChange={(e) => setHealth(Number(e.target.value))} className="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-white focus:border-amber-500 outline-none" />
+                     ) : (
+                       <input type="range" min="1" max="200" value={health} onChange={(e) => setHealth(Number(e.target.value))} className="w-full accent-amber-500" />
+                     )}
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-white/60 mb-1 flex justify-between">
                       <span>Dano de Ataque</span>
                       <span className="text-amber-500">{damage}</span>
                     </label>
-                    <input type="range" min="0" max="50" value={damage} onChange={(e) => setDamage(Number(e.target.value))} className="w-full accent-amber-500" />
+                    <input type="range" min="0" max="100" value={damage} onChange={(e) => setDamage(Number(e.target.value))} className="w-full accent-amber-500" />
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-white/60 mb-1 flex justify-between">
                       <span>Velocidade de Movimento</span>
                       <span className="text-amber-500">{speed}</span>
                     </label>
-                    <input type="range" min="0.1" max="1.5" step="0.05" value={speed} onChange={(e) => setSpeed(Number(e.target.value))} className="w-full accent-amber-500" />
+                    <input type="range" min="0.1" max="2.0" step="0.05" value={speed} onChange={(e) => setSpeed(Number(e.target.value))} className="w-full accent-amber-500" />
                   </div>
                 </div>
               </div>
 
-              {/* Locomoção */}
+              {/* Locomoção & Imunidades */}
               <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 backdrop-blur-sm relative overflow-hidden">
-                <h3 className="text-white font-bold mb-4 border-b border-white/5 pb-2">Locomoção</h3>
-                <div className="grid grid-cols-2 gap-3">
+                <h3 className="text-white font-bold mb-4 border-b border-white/5 pb-2">Locomoção & Defesas</h3>
+                <div className="grid grid-cols-2 gap-3 mb-4">
                   <label className="flex items-center gap-2 text-sm text-white/80 cursor-pointer">
                     <input type="checkbox" checked={canSwim} onChange={(e) => setCanSwim(e.target.checked)} className="accent-amber-500 w-4 h-4 rounded" />
-                    Nadar
+                    <Droplets size={14} className="text-blue-400" /> Nadar
                   </label>
                   <label className="flex items-center gap-2 text-sm text-white/80 cursor-pointer">
                     <input type="checkbox" checked={canFly} onChange={(e) => setCanFly(e.target.checked)} className="accent-amber-500 w-4 h-4 rounded" />
@@ -165,6 +206,58 @@ ${drops.length > 0 ? drops.map(d => `    // - ${d.item} (Chance: ${d.chance}%, M
                     <input type="checkbox" checked={canJump} onChange={(e) => setCanJump(e.target.checked)} className="accent-amber-500 w-4 h-4 rounded" />
                     Saltar
                   </label>
+                  <label className="flex items-center gap-2 text-sm text-white/80 cursor-pointer col-span-2">
+                    <input type="checkbox" checked={isAquatic} onChange={(e) => setIsAquatic(e.target.checked)} className="accent-amber-500 w-4 h-4 rounded" />
+                    Respiração Aquática (Entidade de Água)
+                  </label>
+                </div>
+                
+                <h4 className="text-[10px] uppercase font-bold text-white/40 mb-2 mt-4">Montaria e Controle</h4>
+                <div className="space-y-3 mb-4">
+                  <label className="flex items-center gap-2 text-sm text-white/80 cursor-pointer">
+                    <input type="checkbox" checked={isMountable} onChange={(e) => setIsMountable(e.target.checked)} className="accent-amber-500 w-4 h-4 rounded" />
+                    Montável pelo Jogador
+                  </label>
+                  {isMountable && (
+                    <div className="pl-6 space-y-2">
+                      <label className="flex items-center gap-2 text-sm text-white/80 cursor-pointer">
+                        <input type="checkbox" checked={needsSaddle} onChange={(e) => setNeedsSaddle(e.target.checked)} className="accent-amber-500 w-4 h-4 rounded" />
+                        Precisa de Sela (Saddle)
+                      </label>
+                      <div>
+                        <label className="block text-[10px] font-semibold text-white/60 mb-1">Item para Controlar (Ex: Cenoura no Palito)</label>
+                        <input type="text" value={steerItem} onChange={e => setSteerItem(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-xs text-white focus:border-amber-500 outline-none" placeholder="Opcional" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <h4 className="text-[10px] uppercase font-bold text-white/40 mb-2 mt-4">Imunidades a Dano</h4>
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="flex items-center gap-2 text-sm text-white/80 cursor-pointer">
+                    <input type="checkbox" checked={immuneFire} onChange={(e) => setImmuneFire(e.target.checked)} className="accent-amber-500 w-4 h-4 rounded" />
+                    Fogo/Lava
+                  </label>
+                  <label className="flex items-center gap-2 text-sm text-white/80 cursor-pointer">
+                    <input type="checkbox" checked={immuneFall} onChange={(e) => setImmuneFall(e.target.checked)} className="accent-amber-500 w-4 h-4 rounded" />
+                    Queda
+                  </label>
+                  <label className="flex items-center gap-2 text-sm text-white/80 cursor-pointer">
+                    <input type="checkbox" checked={immuneDrown} onChange={(e) => setImmuneDrown(e.target.checked)} className="accent-amber-500 w-4 h-4 rounded" />
+                    Afogamento
+                  </label>
+                  <label className="flex items-center gap-2 text-sm text-white/80 cursor-pointer">
+                    <input type="checkbox" checked={immunePoison} onChange={(e) => setImmunePoison(e.target.checked)} className="accent-amber-500 w-4 h-4 rounded" />
+                    Veneno
+                  </label>
+                  <label className="flex items-center gap-2 text-sm text-white/80 cursor-pointer">
+                    <input type="checkbox" checked={immuneWither} onChange={(e) => setImmuneWither(e.target.checked)} className="accent-amber-500 w-4 h-4 rounded" />
+                    Wither
+                  </label>
+                  <label className="flex items-center gap-2 text-sm text-white/80 cursor-pointer">
+                    <input type="checkbox" checked={immuneLightning} onChange={(e) => setImmuneLightning(e.target.checked)} className="accent-amber-500 w-4 h-4 rounded" />
+                    Relâmpago
+                  </label>
                 </div>
               </div>
 
@@ -175,17 +268,27 @@ ${drops.length > 0 ? drops.map(d => `    // - ${d.item} (Chance: ${d.chance}%, M
                 <div className="space-y-6">
                   {/* Biomas */}
                   <div>
-                    <label className="block text-xs font-semibold text-white/60 mb-2">Biomas de Spawn permitidos</label>
+                    <label className="block text-xs font-semibold text-white/60 mb-2">Biomas de Spawn</label>
+                    <div className="flex gap-2 mb-2">
+                       <input 
+                         type="text" 
+                         value={customBiome} 
+                         onChange={e => setCustomBiome(e.target.value)} 
+                         placeholder="ID Mod: biome" 
+                         className="flex-1 bg-black/40 border border-white/10 rounded text-xs px-2 py-1 text-white focus:border-amber-500 outline-none"
+                       />
+                       <button onClick={addCustomBiome} className="bg-amber-500 text-black px-2 py-1 rounded text-xs font-bold hover:bg-amber-400">Add</button>
+                    </div>
                     <div className="grid grid-cols-2 gap-2 max-h-[120px] overflow-y-auto pr-2 custom-scrollbar">
-                      {['plains', 'desert', 'forest', 'taiga', 'savanna', 'jungle', 'swamp', 'nether_wastes', 'the_end', 'any'].map(b => (
-                        <label key={b} className="flex items-center gap-2 text-xs text-white/80 cursor-pointer bg-black/40 p-1.5 rounded hover:bg-black/60 transition-colors">
+                      {['plains', 'desert', 'forest', 'taiga', 'savanna', 'jungle', 'swamp', 'nether_wastes', 'the_end'].concat(biomes.filter(b => !['plains', 'desert', 'forest', 'taiga', 'savanna', 'jungle', 'swamp', 'nether_wastes', 'the_end'].includes(b))).map(b => (
+                        <label key={b} className="flex items-center gap-2 text-xs text-white/80 cursor-pointer bg-black/40 p-1.5 rounded hover:bg-black/60 transition-colors truncate" title={b}>
                           <input 
                             type="checkbox" 
                             checked={biomes.includes(b)} 
                             onChange={() => toggleBiome(b)} 
-                            className="accent-amber-500 w-3 h-3 rounded" 
+                            className="accent-amber-500 w-3 h-3 rounded shrink-0" 
                           />
-                          {b}
+                          <span className="truncate">{b}</span>
                         </label>
                       ))}
                     </div>
@@ -229,12 +332,20 @@ ${drops.length > 0 ? drops.map(d => `    // - ${d.item} (Chance: ${d.chance}%, M
                             </div>
                             <div className="flex-1 flex flex-col">
                                <label className="text-[9px] text-white/40 uppercase mb-0.5">Mínimo</label>
-                               <input type="number" min="1" max="64" value={drop.min} onChange={e => updateDrop(index, 'min', Number(e.target.value))} className="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-xs text-white focus:border-amber-500 outline-none" />
+                               <input type="number" min="0" value={drop.min} onChange={e => updateDrop(index, 'min', Number(e.target.value))} className="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-xs text-white focus:border-amber-500 outline-none" />
                             </div>
                             <div className="flex-1 flex flex-col">
                                <label className="text-[9px] text-white/40 uppercase mb-0.5">Máximo</label>
-                               <input type="number" min="1" max="64" value={drop.max} onChange={e => updateDrop(index, 'max', Number(e.target.value))} className="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-xs text-white focus:border-amber-500 outline-none" />
+                               <input type="number" min="0" value={drop.max} onChange={e => updateDrop(index, 'max', Number(e.target.value))} className="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-xs text-white focus:border-amber-500 outline-none" />
                             </div>
+                          </div>
+                          <div className="mt-2 text-[10px] space-y-1">
+                             <label className="text-white/40 uppercase">Condição de Drop</label>
+                             <select value={drop.condition} onChange={e => updateDrop(index, 'condition', e.target.value)} className="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-white focus:border-amber-500 outline-none cursor-pointer">
+                                <option value="always">Sempre dropa (calculo por chance apenas)</option>
+                                <option value="killed_by_player">Morto por um Jogador</option>
+                                <option value="on_fire">Morreu a arder</option>
+                             </select>
                           </div>
                         </div>
                       ))}

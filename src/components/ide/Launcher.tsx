@@ -26,23 +26,21 @@ export const Launcher = ({ onStartProject }: LauncherProps) => {
   const [importProgress, setImportProgress] = useState(0);
   const [importStatus, setImportStatus] = useState('');
 
-  const [availableVersions, setAvailableVersions] = useState<string[]>(['1.21.1', '1.21', '1.20.4']);
+  const ALL_VERSIONS = [
+    '26.2', '26.1.2', '26.1.1', '26.1', '1.21.11', '1.21.4', '1.21.3', '1.21.2', '1.21.1', '1.21', '1.20.6', '1.20.5', '1.20.4', '1.20.3', '1.20.2', '1.20.1', '1.20',
+    '1.19.4', '1.19.3', '1.19.2', '1.19.1', '1.19', '1.18.2', '1.18.1', '1.18',
+    '1.17.1', '1.17', '1.16.5', '1.16.4', '1.16.3', '1.16.2', '1.16.1', '1.16',
+    '1.15.2', '1.14.4', '1.13.2', '1.12.2', '1.11.2', '1.10.2', '1.9.4', '1.8.9', '1.7.10'
+  ];
+
+  const [availableVersions, setAvailableVersions] = useState<string[]>(ALL_VERSIONS);
   const [downloading, setDownloading] = useState(false);
   const [downloadMsg, setDownloadMsg] = useState('Initializing MDK...');
 
   useEffect(() => {
-    // Fetch available versions based on selected loader
-    fetch(`/api/mdk/versions?loader=${loader}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.versions && data.versions.length > 0) {
-          setAvailableVersions(data.versions);
-          if (!data.versions.includes(version)) {
-            setVersion(data.versions[0]);
-          }
-        }
-      })
-      .catch((err) => console.error("Error fetching versions", err));
+    // A simular que versões diferentes podem estar disponíveis por loader no futuro.
+    // Atualmente fornecemos a lista completa.
+    setAvailableVersions(ALL_VERSIONS);
   }, [loader]);
 
   const handleStart = async () => {
@@ -318,13 +316,13 @@ export const Launcher = ({ onStartProject }: LauncherProps) => {
             {/* Compatibility Dashboard (Dependencies) */}
             <div className="space-y-2 md:col-span-2 mt-2">
               <label className="block text-xs font-bold text-white/60 uppercase tracking-widest flex justify-between items-center">
-                <span>Compatibility Integrations</span>
-                <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded-full text-white/50 lowercase tracking-normal">Optional</span>
+                <span>Mods Compatíveis</span>
+                <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded-full text-white/50 lowercase tracking-normal">Opcional</span>
               </label>
-              <p className="text-[11px] text-white/40 mb-2">Import .jar files of other mods to expose their API (classes/methods) to ModForger's compiler.</p>
+              <p className="text-[11px] text-white/40 mb-2">Importe ficheiros .jar de outros mods para usar as suas APIs (classes/métodos) no ModForger.</p>
               
               <div 
-                className={`w-full border-2 border-dashed ${dragActive ? 'border-amber-500 bg-amber-500/5' : 'border-white/10 bg-black/40'} rounded-xl p-6 flex flex-col items-center justify-center text-center transition-all`}
+                className={`relative w-full border-2 border-dashed ${dragActive ? 'border-amber-500 bg-amber-500/5' : 'border-white/10 bg-black/40'} rounded-xl p-6 flex flex-col items-center justify-center text-center transition-all`}
                 onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
                 onDragLeave={() => setDragActive(false)}
                 onDrop={(e) => {
