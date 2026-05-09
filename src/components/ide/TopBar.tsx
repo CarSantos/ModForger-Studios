@@ -27,6 +27,14 @@ export const TopBar = ({ projectSettings }: TopBarProps) => {
           <Github size={14} className="text-white" />
           Exportar (Git/VSCode)
         </button>
+        <button 
+          onClick={() => {
+            alert("A enviar Representação Intermediária (IR) para o Cloud Server...\n\nA compilar usando Gradle em Sandbox...\n\n(Aviso: Download do mod.jar não implementado em mock)");
+          }}
+          className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold rounded-md bg-purple-500/10 text-purple-400 border border-purple-500/20 hover:bg-purple-500/20 transition-colors shadow-[0_0_10px_rgba(168,85,247,0.1)]"
+        >
+          <Code size={14} /> Compilar na Nuvem (.jar)
+        </button>
         <button className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold rounded-md bg-white/[0.03] border border-white/10 text-white/70 hover:bg-white/10 hover:text-white transition-colors">
           <Bug size={14} className="text-red-400" />
           Testar

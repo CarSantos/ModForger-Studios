@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Sparkles, Box, FileCode2, Info, Plus, Trash2, Skull, Heart, Droplets } from 'lucide-react';
+import { ThreeDViewer } from './ThreeDViewer';
 
 export const EntityEditor = ({ setActiveView }: { setActiveView?: (view: string) => void }) => {
+
   const [entityType, setEntityType] = useState('hostile'); // hostile, passive, neutral, boss
   const [health, setHealth] = useState(20);
   const [damage, setDamage] = useState(3);
@@ -395,11 +397,8 @@ ${drops.length > 0 ? drops.map(d => `    // - ${d.item} (Chance: ${d.chance}%, M
                   </div>
                 ) : (
                   <div className="flex-1 flex flex-col gap-4">
-                    <div className="border border-white/5 bg-black/40 rounded-xl p-4 flex-1 flex flex-col items-center justify-center relative overflow-hidden group">
-                      {/* Simulating 3D preview */}
-                      <div className="w-full h-full absolute inset-0 opacity-20 bg-[url('https://transparenttextures.com/patterns/cubes.png')] mix-blend-overlay pointer-events-none"></div>
-                      <Box size={64} className="text-amber-500/50 mb-4 animate-pulse duration-1000" />
-                      <span className="text-sm text-white/50 font-bold uppercase tracking-widest">Preview Mode Active</span>
+                    <div className="border border-white/5 bg-[#0D0D11] rounded-xl p-0 flex-1 flex flex-col relative overflow-hidden group">
+                      <ThreeDViewer />
                     </div>
 
                     <div className="bg-white/5 border border-white/10 rounded-lg p-3 space-y-2">

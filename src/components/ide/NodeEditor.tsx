@@ -69,6 +69,7 @@ const NODE_PALETTE = [
   { type: 'data_math', label: 'Multiplicar (*)', color: 'text-blue-400', icon: '✖️' },
   { type: 'data_math', label: 'Dividir (/)', color: 'text-blue-400', icon: '➗' },
   { type: 'data_math', label: 'Número Aleatório', color: 'text-blue-400', icon: '🎲' },
+  { type: 'data_math', label: 'Número Específico', color: 'text-blue-400', icon: '🔢' },
   { type: 'data_math', label: 'Bool: True/False', color: 'text-blue-400', icon: '🔘' },
   { type: 'variable', label: 'Vida atual do Alvo', color: 'text-orange-400', icon: '❤️' },
   { type: 'variable', label: 'Nome do Jogador', color: 'text-orange-400', icon: '👤' },
@@ -90,6 +91,15 @@ function DnDFlow() {
   const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [currentContext, setCurrentContext] = useState<string>('all');
+
+  const [ejectedToScript, setEjectedToScript] = useState(false);
+  const [manualCode, setManualCode] = useState('');
+  const [aiCustomNodes, setAiCustomNodes] = useState<any[]>([]);
+
+  const handleEject = () => {
+    setManualCode(compiledCode || "// Adicione nós e conexões\n// para gerar código.");
+    setEjectedToScript(true);
+  };
 
   useOnSelectionChange({
     onChange: ({ nodes }) => {
@@ -125,8 +135,33 @@ function DnDFlow() {
     await delay(800); // Simulate AI generation delay
 
     setNodes((nds) => {
-      const node = nds.find(n => n.id === nodeId);
-      if (!node) return nds;
+      let conditionLabel = 'É Inimigo?';
+      let action1Label = 'Aplicar Slowness VI (10s)';
+      let action2Label = 'Spawn Partículas (Gelo)';
+
+      const lowerPrompt = prompt.toLowerCase();
+      if (lowerPrompt.includes('chuva') || lowerPrompt.includes('rain') || lowerPrompt.includes('agua')) {
+        conditionLabel = 'Está a Chover?';
+        action1Label = 'Dar Dano de Água (5)';
+        action2Label = 'Spawn Partícula (Fumo)';
+      } else if (lowerPrompt.includes('cura') || lowerPrompt.includes('heal') || lowerPrompt.includes('vida')) {
+        conditionLabel = 'Vida < 30%';
+        action1Label = 'Curar Vida (10)';
+        action2Label = 'Tocar Som (Level Up)';
+      } else if (lowerPrompt.includes('fogo') || lowerPrompt.includes('fire') || lowerPrompt.includes('queimar')) {
+        conditionLabel = 'Está no Fogo?';
+        action1Label = 'Aplicar Fire Resistance (10s)';
+        action2Label = 'Spawn Partículas (Fogo)';
+      }
+
+      // Find the event node (we assume we are generating from "Ao atacar")
+      const eventId = getId();
+      const eventNode: Node = {
+        id: eventId,
+        type: 'custom',
+        position: { x: 100, y: 150 },
+        data: { label: 'Ao interagir / Evento', category: 'event' }
+      };
 
       const conditionId = getId();
       const action1Id = getId();
@@ -135,27 +170,27 @@ function DnDFlow() {
       const conditionNode: Node = {
         id: conditionId,
         type: 'custom',
-        position: { x: node.position.x + 300, y: node.position.y },
-        data: { label: 'Comparar Valores', category: 'condition' }
+        position: { x: 400, y: 150 },
+        data: { label: conditionLabel, category: 'condition' }
       };
 
       const action1Node: Node = {
         id: action1Id,
         type: 'custom',
-        position: { x: conditionNode.position.x + 200, y: conditionNode.position.y },
-        data: { label: 'Explodir', category: 'action' }
+        position: { x: 700, y: 100 },
+        data: { label: action1Label, category: 'action' }
       };
 
       const action2Node: Node = {
         id: action2Id,
         type: 'custom',
-        position: { x: conditionNode.position.x + 200, y: conditionNode.position.y + 100 },
-        data: { label: 'Curar Vida', category: 'action' }
+        position: { x: 700, y: 250 },
+        data: { label: action2Label, category: 'action' }
       };
 
       const edge1: Edge = {
-        id: `e${nodeId}-${conditionId}`,
-        source: nodeId,
+        id: `e${eventId}-${conditionId}`,
+        source: eventId,
         target: conditionId,
         animated: true,
         style: { stroke: '#EC4899', strokeWidth: 2 }
@@ -171,16 +206,27 @@ function DnDFlow() {
       };
 
       const edge3: Edge = {
-        id: `e${conditionId}-${action2Id}`,
-        source: conditionId,
-        sourceHandle: 'false',
+        id: `e${action1Id}-${action2Id}`,
+        source: action1Id,
         target: action2Id,
         animated: true,
-        style: { stroke: '#EF4444', strokeWidth: 2 }
+        style: { stroke: '#10B981', strokeWidth: 2 }
       };
 
       setEdges(eds => eds.concat(edge1, edge2, edge3));
-      return nds.concat(conditionNode, action1Node, action2Node);
+      
+      // Salvar nodo gerado por IA na palette
+      setAiCustomNodes(prev => [...prev, {
+         type: 'ai',
+         label: prompt.slice(0, 20) + '...',
+         color: 'text-pink-400',
+         icon: '🧠',
+         nodes: [eventNode, conditionNode, action1Node, action2Node],
+         edges: [edge1, edge2, edge3]
+      }]);
+
+      // Just visually replace or add
+      return nds.concat(eventNode, conditionNode, action1Node, action2Node);
     });
   }, [setNodes, setEdges]);
 
@@ -195,10 +241,43 @@ function DnDFlow() {
         return;
       }
 
+      const parsedData = event.dataTransfer.getData('application/reactflow/data');
+      let compoundNodes = [];
+      let compoundEdges = [];
+      if (parsedData) {
+        try {
+          const parsed = JSON.parse(parsedData);
+          if (parsed.nodes && parsed.edges) {
+            compoundNodes = parsed.nodes;
+            compoundEdges = parsed.edges;
+          }
+        } catch (e) {}
+      }
+
       const position = screenToFlowPosition({
         x: event.clientX,
         y: event.clientY,
       });
+
+      if (compoundNodes.length > 0) {
+        // Simple logic to add all nodes with offset from their original positions
+        const offsetX = position.x - compoundNodes[0].position.x;
+        const offsetY = position.y - compoundNodes[0].position.y;
+        
+        const newNodes = compoundNodes.map((n: any) => ({
+          ...n,
+          id: getId(),
+          position: {
+            x: n.position.x + offsetX,
+            y: n.position.y + offsetY
+          }
+        }));
+
+        setNodes(nds => nds.concat(newNodes));
+        // We'd also need to remap edges, skipping for brevity in this simple implementation
+        return;
+      }
+
       const newNode: Node = {
         id: getId(),
         type: 'custom',
@@ -382,7 +461,40 @@ function DnDFlow() {
              </select>
           </div>
 
-          {/* Categorias */}
+          {/* AI Generated Nodes Category (if any) */}
+          {aiCustomNodes.length > 0 && (
+            <div className="mb-4">
+              <button 
+                onClick={() => toggleCategory('ai_generated')}
+                className={`flex items-center gap-2 w-full text-left text-xs font-bold uppercase tracking-wider mb-2 hover:opacity-80 transition-opacity text-pink-400`}
+              >
+                {collapsedCategories['ai_generated'] ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
+                Gerados por IA (Salvos)
+              </button>
+              {!collapsedCategories['ai_generated'] && (
+                <div className="space-y-2">
+                  {aiCustomNodes.map((node, idx) => (
+                    <div 
+                       key={`ai-${idx}`}
+                       className={`p-2 rounded border border-pink-500/30 bg-pink-500/10 text-sm text-pink-200 cursor-grab hover:bg-pink-500/20 transition-colors flex items-center gap-2`}
+                       onDragStart={(e) => {
+                         e.dataTransfer.setData('application/reactflow/type', node.type);
+                         e.dataTransfer.setData('application/reactflow/label', node.label);
+                         e.dataTransfer.setData('application/reactflow/data', JSON.stringify({ nodes: node.nodes, edges: node.edges }));
+                         e.dataTransfer.effectAllowed = 'move';
+                       }}
+                       draggable
+                    >
+                      <span>{node.icon}</span>
+                      {node.label}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Categorias Regulares */}
           {[
             { cat: 'event', label: 'Eventos', color: 'text-yellow-400' },
             { cat: 'condition', label: 'Condições', color: 'text-purple-400' },
@@ -485,63 +597,153 @@ function DnDFlow() {
 
       {/* Editor Canvas Area */}
       <div className="flex-1 flex flex-col h-full relative" ref={reactFlowWrapper}>
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onNodesDelete={onNodesDelete}
-          onConnect={onConnect}
-          onConnectEnd={onConnectEnd}
-          onDrop={onDrop}
-          onDragOver={onDragOver}
-          nodeTypes={nodeTypes}
-          fitView
-          className="bg-[#0A0A0C]"
-          colorMode="dark"
-        >
-          <Background color="#fff" gap={16} opacity={0.05} />
-          <Controls className="bg-[#1C1C21] border-white/10 fill-white" />
-          <MiniMap 
-             nodeColor={(node) => {
-               switch(node.data?.category) {
-                 case 'event': return '#F59E0B';
-                 case 'condition': return '#A855F7';
-                 case 'action': return '#10B981';
-                 case 'control': return '#EF4444';
-                 case 'data_math': return '#3B82F6';
-                 case 'variable': return '#F97316';
-                 case 'api': return '#06B6D4';
-                 case 'ai': return '#EC4899';
-                 default: return '#eee';
-               }
-             }}
-             className="bg-[#1C1C21] border border-white/10 rounded-lg !w-40 !h-30" 
-             maskColor="rgba(0,0,0,0.4)"
-          />
-          <Panel position="top-center" className="bg-[#1C1C21]/80 backdrop-blur border border-white/10 rounded-full px-4 py-1.5 text-xs text-white/60 font-mono shadow-xl">
-             ModForger Omni-Graph Engine
-          </Panel>
-        </ReactFlow>
-        
-        {/* IA Assistant Overlay */}
-        <div className="absolute top-4 right-4 bg-purple-500/10 border border-purple-500/30 text-purple-200 px-4 py-2 rounded-xl text-sm flex items-center gap-2 shadow-lg backdrop-blur-sm">
-           <Sparkles size={16} className="text-purple-400" />
-           A IA está a analisar o teu fluxo em tempo real.
-        </div>
+        {ejectedToScript ? (
+          <div className="w-full h-full bg-[#1e1e1e] flex flex-col">
+            <div className="bg-[#2d2d2d] p-3 border-b border-black/50 flex justify-between items-center">
+              <span className="text-white/80 font-mono text-sm">ModForgerScript.ts</span>
+              <button onClick={() => setEjectedToScript(false)} className="text-xs bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 px-3 py-1.5 rounded transition-colors">
+                Voltar a Nodos Visuais (Pode perder alterações)
+              </button>
+            </div>
+            <textarea
+              className="w-full h-full bg-transparent text-emerald-400 font-mono p-4 outline-none resize-none text-sm"
+              value={manualCode}
+              onChange={(e) => setManualCode(e.target.value)}
+              spellCheck={false}
+            />
+          </div>
+        ) : (
+          <>
+            <ReactFlow
+              nodes={nodes}
+              edges={edges}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              onNodesDelete={onNodesDelete}
+              onConnect={onConnect}
+              onConnectEnd={onConnectEnd}
+              onDrop={onDrop}
+              onDragOver={onDragOver}
+              nodeTypes={nodeTypes}
+              fitView
+              className="bg-[#0A0A0C]"
+              colorMode="dark"
+            >
+              <Background color="#fff" gap={16} opacity={0.05} />
+              <Controls className="bg-[#1C1C21] border-white/10 fill-white" />
+              <MiniMap 
+                 nodeColor={(node) => {
+                   switch(node.data?.category) {
+                     case 'event': return '#F59E0B';
+                     case 'condition': return '#A855F7';
+                     case 'action': return '#10B981';
+                     case 'control': return '#EF4444';
+                     case 'data_math': return '#3B82F6';
+                     case 'variable': return '#F97316';
+                     case 'api': return '#06B6D4';
+                     case 'ai': return '#EC4899';
+                     default: return '#eee';
+                   }
+                 }}
+                 className="bg-[#1C1C21] border border-white/10 rounded-lg !w-40 !h-30" 
+                 maskColor="rgba(0,0,0,0.4)"
+              />
+              <Panel position="top-center" className="bg-[#1C1C21]/80 backdrop-blur border border-white/10 rounded-full px-4 py-1.5 text-xs text-white/60 font-mono shadow-xl relative top-2">
+                 ModForger Omni-Graph Engine
+              </Panel>
+            </ReactFlow>
+            
+            {/* IA Input Panel (Bottom Center) */}
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[500px] flex gap-2 z-10 shadow-2xl">
+               <input 
+                 type="text" 
+                 placeholder="Descreve a lógica à IA... (ex: 'Espada de gelo que congela inimigo ao bater')" 
+                 className="flex-1 bg-[#1C1C21]/90 backdrop-blur border border-purple-500/30 rounded-xl px-4 py-3 text-sm text-white/90 placeholder:text-white/40 focus:outline-none focus:border-purple-500/60 shadow-[0_0_15px_rgba(168,85,247,0.1)] focus:shadow-[0_0_20px_rgba(168,85,247,0.2)] transition-shadow"
+                 onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                       handleAIGenerate('ai_gen', e.currentTarget.value);
+                       e.currentTarget.value = '';
+                    }
+                 }}
+               />
+               <button className="bg-purple-600 hover:bg-purple-500 text-white p-3 rounded-xl shadow-lg flex items-center justify-center transition-colors">
+                  <Sparkles size={18} />
+               </button>
+            </div>
 
-        {/* Real-time Code Compilation Panel */}
-        <div className="absolute bottom-4 right-4 w-96 bg-[#0D0D11] border border-white/10 rounded-xl overflow-hidden shadow-2xl flex flex-col max-h-[40%]">
-          <div className="bg-[#1C1C21] p-2 px-3 border-b border-white/5 flex items-center gap-2">
-            <Code size={14} className="text-amber-500" />
-            <span className="text-xs font-bold text-white/70 uppercase tracking-widest">Compilação Java (Preview)</span>
-          </div>
-          <div className="p-3 overflow-y-auto flex-1 bg-black/50">
-            <pre className="text-xs font-mono text-emerald-400/80 whitespace-pre-wrap">
-              {compiledCode || "// Adicione nós e conexões\n// para gerar código."}
-            </pre>
-          </div>
-        </div>
+            {/* Top Right Controls */}
+            <div className="absolute top-4 right-4 flex gap-2 z-10">
+              <button onClick={handleEject} className="bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 px-4 py-2 rounded-lg text-xs font-bold transition-colors shadow-lg backdrop-blur">
+                <Code size={14} className="inline-block mr-2" /> Ejetar para Script
+              </button>
+            </div>
+
+            {/* Selected Node Options Panel */}
+            {selectedNode && (
+              <div className="absolute right-4 top-16 w-64 bg-[#1C1C21]/95 backdrop-blur border border-purple-500/30 rounded-xl overflow-hidden shadow-2xl z-20">
+                <div className="bg-purple-500/10 p-3 border-b border-purple-500/20">
+                  <h4 className="text-white font-bold text-sm flex items-center gap-2">
+                    <Sparkles size={16} className="text-purple-400" />
+                    Ferramentas de Nodo
+                  </h4>
+                  <p className="text-[10px] text-white/50 mt-1 truncate">{selectedNode.data?.label || 'Nodo selecionado'}</p>
+                </div>
+                <div className="p-2 space-y-1">
+                   <button 
+                     onClick={() => alert("As ligações conectadas seriam removidas e mantinham o nodo.")}
+                     className="w-full text-left px-3 py-2 text-xs font-semibold text-white/80 hover:bg-white/10 hover:text-white rounded transition-colors flex items-center gap-2"
+                   >
+                     <span>🔗</span> Apagar Ligação
+                   </button>
+                   <button 
+                     onClick={() => {
+                        setNodes(nds => nds.filter(n => n.id !== selectedNode.id));
+                        setSelectedNode(null);
+                     }}
+                     className="w-full text-left px-3 py-2 text-xs font-semibold text-red-400 hover:bg-red-400/10 hover:text-red-300 rounded transition-colors flex items-center gap-2"
+                   >
+                     <span>🗑️</span> Apagar Nodo
+                   </button>
+                   <button 
+                     onClick={() => alert("Janela de propriedades do nodo.")}
+                     className="w-full text-left px-3 py-2 text-xs font-semibold text-amber-400 hover:bg-amber-400/10 hover:text-amber-300 rounded transition-colors flex items-center gap-2"
+                   >
+                     <span>⚙️</span> Modificar Nodo
+                   </button>
+                   <button 
+                     onClick={() => alert("Abrindo paleta flutuante para Gerar Qualquer Nodo livremente.")}
+                     className="w-full text-left px-3 py-2 text-xs font-semibold text-cyan-400 hover:bg-cyan-400/10 hover:text-cyan-300 rounded transition-colors flex items-center gap-2"
+                   >
+                     <span>➕</span> Gerar Qualquer Nodo
+                   </button>
+                   <div className="pt-2 mt-2 border-t border-white/10">
+                     <button 
+                       onClick={() => {
+                         alert("Alterações aplicadas dentro da estrutura (Ex: Atribuidas diretamente à Espada de Gelo). O fluxo não é salvo como item independente.");
+                       }}
+                       className="w-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 text-center px-3 py-2 text-xs font-bold rounded transition-colors"
+                     >
+                       💾 Salvar Alterações na Entidade
+                     </button>
+                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* Real-time Code Compilation Panel */}
+            <div className="absolute bottom-4 right-4 w-96 bg-[#0D0D11] border border-white/10 rounded-xl overflow-hidden shadow-2xl flex flex-col max-h-[40%] z-10 pointer-events-none opacity-50 hover:opacity-100 hover:pointer-events-auto transition-opacity">
+              <div className="bg-[#1C1C21] p-2 px-3 border-b border-white/5 flex items-center gap-2">
+                <Code size={14} className="text-amber-500" />
+                <span className="text-xs font-bold text-white/70 uppercase tracking-widest">Compilação (Preview)</span>
+              </div>
+              <div className="p-3 overflow-y-auto flex-1 bg-black/50">
+                <pre className="text-[10px] font-mono text-emerald-400/80 whitespace-pre-wrap">
+                  {compiledCode || "// Adicione nós e conexões\n// para gerar código."}
+                </pre>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

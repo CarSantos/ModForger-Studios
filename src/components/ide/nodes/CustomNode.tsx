@@ -79,6 +79,16 @@ export function CustomNode({ id, data, isConnectable }: NodeProps) {
              </button>
           </div>
         )}
+
+        {category === 'data_math' && label === 'Número Específico' && (
+           <input type="number" defaultValue="0" className="w-full bg-black/40 border border-blue-500/50 rounded p-1 text-xs text-white focus:outline-none nodrag mt-2" />
+        )}
+        {category === 'data_math' && label === 'Número Aleatório' && (
+           <div className="flex gap-1 mt-2">
+             <input type="number" placeholder="Min" defaultValue="0" className="w-1/2 bg-black/40 border border-blue-500/50 rounded p-1 text-xs text-white focus:outline-none nodrag" />
+             <input type="number" placeholder="Max" defaultValue="10" className="w-1/2 bg-black/40 border border-blue-500/50 rounded p-1 text-xs text-white focus:outline-none nodrag" />
+           </div>
+        )}
       </div>
 
       {/* Source handles (Output) */}

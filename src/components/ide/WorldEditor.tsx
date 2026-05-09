@@ -19,7 +19,7 @@ export const WorldEditor = ({ setActiveView }: { setActiveView?: (view: string) 
   const [dimensionBiomes, setDimensionBiomes] = useState(['minecraft:plains']);
 
   // Structure state
-  const [structures, setStructures] = useState<{name: string, rarity: number, biomes: string[]}[]>([]);
+  const [structures, setStructures] = useState<{name: string, rarity: number, biomes: string[], creatures: string[]}[]>([]);
   const [dragActive, setDragActive] = useState(false);
 
   // Event state
@@ -27,6 +27,9 @@ export const WorldEditor = ({ setActiveView }: { setActiveView?: (view: string) 
   const [eventTrigger, setEventTrigger] = useState('TickEvent.WorldTickEvent');
   const [eventSkyColor, setEventSkyColor] = useState('#AA0000');
   const [mobSpawnMultiplier, setMobSpawnMultiplier] = useState(3.0);
+  const [plantGrowthMultiplier, setPlantGrowthMultiplier] = useState(1.0);
+  const [eventChance, setEventChance] = useState(5);
+  const [eventCondition, setEventCondition] = useState('isNight()');
 
   const handleStructureDrop = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -34,7 +37,7 @@ export const WorldEditor = ({ setActiveView }: { setActiveView?: (view: string) 
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const newStructures = Array.from(e.dataTransfer.files)
         .filter((f: File) => f.name.endsWith('.nbt') || f.name.endsWith('.schem'))
-        .map((f: File) => ({ name: f.name, rarity: 50, biomes: ['minecraft:plains'] }));
+        .map((f: File) => ({ name: f.name, rarity: 50, biomes: ['minecraft:plains'], creatures: [] }));
       setStructures([...structures, ...newStructures]);
     }
   };
@@ -244,7 +247,7 @@ export const WorldEditor = ({ setActiveView }: { setActiveView?: (view: string) 
                     <span className="text-xs text-white/30 mt-1">Geração via WorldEdit ou nativa</span>
                     <input type="file" accept=".nbt,.schem" multiple className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" onChange={(e) => {
                       if (e.target.files) {
-                        const newStructures = Array.from(e.target.files).map((f: File) => ({ name: f.name, rarity: 50, biomes: ['minecraft:plains'] }));
+                        const newStructures = Array.from(e.target.files).map((f: File) => ({ name: f.name, rarity: 50, biomes: ['minecraft:plains'], creatures: [] }));
                         setStructures([...structures, ...newStructures]);
                       }
                     }}/>
@@ -262,19 +265,25 @@ export const WorldEditor = ({ setActiveView }: { setActiveView?: (view: string) 
                           <button onClick={() => setStructures(structures.filter((_, i) => i !== idx))} className="absolute top-2 right-2 text-white/20 hover:text-red-400 text-xs">⨯ Remover</button>
                           <div className="flex items-center justify-between mt-2">
                             <span className="font-mono text-xs text-amber-400">{struct.name}</span>
-                            <span className="text-[10px] text-white/40 uppercase">Rarity / Biomes</span>
+                            <span className="text-[10px] text-white/40 uppercase">Rarity / Spawns</span>
                           </div>
-                          <div className="flex items-center gap-3">
-                            <input type="range" min="1" max="1000" value={struct.rarity} onChange={(e) => {
-                               const newStructs = [...structures];
-                               newStructs[idx].rarity = Number(e.target.value);
-                               setStructures(newStructs);
-                            }} className="flex-1 accent-amber-500" />
-                            <span className="text-xs text-white/50 w-12 text-right">1 in {struct.rarity}</span>
+                          
+                          <div className="mt-1">
+                            <label className="text-[10px] text-white/40 uppercase tracking-widest block mb-1">Chance de Geração (Raridade na chunk)</label>
+                            <div className="flex items-center gap-3">
+                              <input type="range" min="1" max="1000" value={struct.rarity} onChange={(e) => {
+                                 const newStructs = [...structures];
+                                 newStructs[idx].rarity = Number(e.target.value);
+                                 setStructures(newStructs);
+                              }} className="flex-1 accent-amber-500" />
+                              <span className="text-xs text-white/50 w-12 text-right">1 in {struct.rarity}</span>
+                            </div>
                           </div>
+                          
                           <div className="mt-2 pt-2 border-t border-white/5">
+                            <label className="text-[10px] text-white/40 uppercase tracking-widest block mb-1">Biomas em que spawna</label>
                             <div className="flex gap-2">
-                              <input type="text" placeholder="minecraft:forest" className="flex-1 bg-black/40 border border-white/10 rounded px-2 py-1 text-xs text-white focus:border-amber-500 outline-none" onKeyDown={(e) => {
+                              <input type="text" placeholder="Adicionar bioma... ex: minecraft:forest" className="flex-1 bg-black/40 border border-white/10 rounded px-2 py-1 text-xs text-white focus:border-amber-500 outline-none" onKeyDown={(e) => {
                                 if (e.key === 'Enter') {
                                   const val = e.currentTarget.value;
                                   if (val && !struct.biomes.includes(val)) {
@@ -299,6 +308,37 @@ export const WorldEditor = ({ setActiveView }: { setActiveView?: (view: string) 
                               ))}
                             </div>
                           </div>
+
+                          <div className="mt-2 pt-2 border-t border-white/5">
+                            <label className="text-[10px] text-white/40 uppercase tracking-widest block mb-1">Criaturas que spawn na estrutura</label>
+                            <div className="flex gap-2">
+                              <input type="text" placeholder="Adicionar criatura... ex: minecraft:zombie" className="flex-1 bg-black/40 border border-white/10 rounded px-2 py-1 text-xs text-white focus:border-amber-500 outline-none" onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  const val = e.currentTarget.value;
+                                  if (val && !(struct.creatures || []).includes(val)) {
+                                    const newStructs = [...structures];
+                                    if (!newStructs[idx].creatures) newStructs[idx].creatures = [];
+                                    newStructs[idx].creatures.push(val);
+                                    setStructures(newStructs);
+                                    e.currentTarget.value = '';
+                                  }
+                                }
+                              }}/>
+                            </div>
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {(struct.creatures || []).map((c, cIdx) => (
+                                <span key={cIdx} className="bg-red-500/10 text-red-300 border border-red-500/20 text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1">
+                                  {c}
+                                  <button onClick={() => {
+                                    const newStructs = [...structures];
+                                    newStructs[idx].creatures = newStructs[idx].creatures.filter(x => x !== c);
+                                    setStructures(newStructs);
+                                  }} className="hover:text-red-400">×</button>
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+
                         </div>
                       ))
                     )}
@@ -315,6 +355,18 @@ export const WorldEditor = ({ setActiveView }: { setActiveView?: (view: string) 
                     <div>
                       <label className="block text-xs font-semibold text-white/60 mb-1">Nome do Evento</label>
                       <input type="text" value={eventName} onChange={(e) => setEventName(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none" />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="col-span-2">
+                        <label className="block text-xs font-semibold text-white/60 mb-1">Certeza/Chance do Evento Acontecer (%)</label>
+                        <input type="range" min="0" max="100" step="1" value={eventChance} onChange={(e) => setEventChance(Number(e.target.value))} className="w-full accent-amber-500 mb-1" />
+                        <div className="text-right text-xs text-amber-500 font-bold">{eventChance}% de chance diária/tick</div>
+                      </div>
+                      <div className="col-span-2">
+                        <label className="block text-xs font-semibold text-white/60 mb-1">Condição de acontecimento (Ex: Somente de noite)</label>
+                        <input type="text" value={eventCondition} onChange={(e) => setEventCondition(e.target.value)} placeholder="Ex: world.isNight() && world.isRaining()" className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none font-mono" />
+                      </div>
                     </div>
 
                     <div>
@@ -339,12 +391,21 @@ export const WorldEditor = ({ setActiveView }: { setActiveView?: (view: string) 
                        </div>
                     </div>
 
-                    <div>
-                      <label className="block text-xs font-semibold text-white/60 mb-1 flex justify-between">
-                        <span>Multiplicador de Spawn de Monstros</span>
-                        <span className="text-amber-500">{mobSpawnMultiplier}x</span>
-                      </label>
-                      <input type="range" min="0" max="10" step="0.1" value={mobSpawnMultiplier} onChange={(e) => setMobSpawnMultiplier(Number(e.target.value))} className="w-full accent-amber-500" />
+                    <div className="grid grid-cols-2 gap-4 border-t border-white/5 pt-4">
+                      <div>
+                        <label className="block text-[10px] font-semibold text-white/60 mb-1 flex justify-between">
+                          <span>Spawn de Monstros</span>
+                          <span className="text-amber-500">{mobSpawnMultiplier}x</span>
+                        </label>
+                        <input type="range" min="0" max="10" step="0.1" value={mobSpawnMultiplier} onChange={(e) => setMobSpawnMultiplier(Number(e.target.value))} className="w-full accent-amber-500" />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-semibold text-white/60 mb-1 flex justify-between">
+                          <span>Velocidade Crescimento (Plantas)</span>
+                          <span className="text-amber-500">{plantGrowthMultiplier}x</span>
+                        </label>
+                        <input type="range" min="0" max="5" step="0.1" value={plantGrowthMultiplier} onChange={(e) => setPlantGrowthMultiplier(Number(e.target.value))} className="w-full accent-amber-500" />
+                      </div>
                     </div>
 
                     <div className="border-t border-white/5 pt-4">
@@ -373,11 +434,13 @@ export const WorldEditor = ({ setActiveView }: { setActiveView?: (view: string) 
                   <div className="flex-1 bg-[#0F0F13] p-4 rounded-xl border border-white/5 font-mono text-[11px] text-white/60 overflow-y-auto">
                      <span className="text-pink-400">@SubscribeEvent</span><br/>
                      <span className="text-pink-400">public void</span> <span className="text-blue-300">onWorldEvent</span>({eventTrigger} <span className="text-orange-300">event</span>) {'{'}<br/>
-                     &nbsp;&nbsp;&nbsp;&nbsp;<span className="text-pink-400">if</span> (event.world.isNight() && is{eventName.replace(/\s+/g,'')}Active()) {'{'}<br/>
+                     &nbsp;&nbsp;&nbsp;&nbsp;<span className="text-pink-400">if</span> (Math.random() &lt; {eventChance}f / 100f && {eventCondition}) {'{'}<br/>
                      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;event.world.setSkyColor(<span className="text-amber-300">"{eventSkyColor}"</span>);<br/>
                      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MobSpawnManager.setMultiplier(<span className="text-amber-300">{mobSpawnMultiplier}f</span>);<br/>
+                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CropGrowthManager.setMultiplier(<span className="text-amber-300">{plantGrowthMultiplier}f</span>);<br/>
                      &nbsp;&nbsp;&nbsp;&nbsp;{'}'} <span className="text-pink-400">else</span> {'{'}<br/>
                      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MobSpawnManager.resetMultiplier();<br/>
+                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CropGrowthManager.resetMultiplier();<br/>
                      &nbsp;&nbsp;&nbsp;&nbsp;{'}'}<br/>
                      {'}'}
                   </div>
