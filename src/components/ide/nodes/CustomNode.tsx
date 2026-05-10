@@ -79,6 +79,14 @@ export function CustomNode({ id, data, isConnectable }: NodeProps) {
              </button>
           </div>
         )}
+        
+        {/* NEW: Minecraft Item display */}
+        {category === 'item' && data.itemData && (
+          <div className="mt-2 pt-2 border-t border-white/10 text-left text-[10px] space-y-1">
+            <div className="text-white/60">ID: <span className="text-amber-400 font-mono">{data.itemData.registryName}</span></div>
+            <div className="text-white/60">Tipo: <span className="text-white font-mono">{data.itemData.type}</span></div>
+          </div>
+        )}
 
         {category === 'data_math' && label === 'Número Específico' && (
            <input type="number" defaultValue="0" className="w-full bg-black/40 border border-blue-500/50 rounded p-1 text-xs text-white focus:outline-none nodrag mt-2" />

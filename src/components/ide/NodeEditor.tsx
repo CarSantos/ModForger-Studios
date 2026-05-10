@@ -18,6 +18,7 @@ import {
 import '@xyflow/react/dist/style.css';
 import { CustomNode } from './nodes/CustomNode';
 import { Code, Sparkles, Box, Search, ChevronDown, ChevronRight, Plus } from 'lucide-react';
+import { generateModFromPrompt } from '../../services/aiService';
 
 const initialNodes: Node[] = [
   {
@@ -130,104 +131,45 @@ function DnDFlow() {
   }, []);
 
   const handleAIGenerate = useCallback(async (nodeId: string, prompt: string) => {
-    // Generate some nodes based on the text prompt
-    const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
-    await delay(800); // Simulate AI generation delay
+    // Generate nodes based on the text prompt via IR
+    const result = await generateModFromPrompt(prompt);
+    
+    if (result.logic) {
+      const { nodes: irNodes, edges: irEdges } = result.logic;
 
-    setNodes((nds) => {
-      let conditionLabel = 'É Inimigo?';
-      let action1Label = 'Aplicar Slowness VI (10s)';
-      let action2Label = 'Spawn Partículas (Gelo)';
+      const newNodes: Node[] = irNodes.map(irn => ({
+        id: irn.id,
+        type: irn.type,
+        position: irn.position,
+        data: { label: irn.label, category: irn.category, ...irn.data }
+      }));
 
-      const lowerPrompt = prompt.toLowerCase();
-      if (lowerPrompt.includes('chuva') || lowerPrompt.includes('rain') || lowerPrompt.includes('agua')) {
-        conditionLabel = 'Está a Chover?';
-        action1Label = 'Dar Dano de Água (5)';
-        action2Label = 'Spawn Partícula (Fumo)';
-      } else if (lowerPrompt.includes('cura') || lowerPrompt.includes('heal') || lowerPrompt.includes('vida')) {
-        conditionLabel = 'Vida < 30%';
-        action1Label = 'Curar Vida (10)';
-        action2Label = 'Tocar Som (Level Up)';
-      } else if (lowerPrompt.includes('fogo') || lowerPrompt.includes('fire') || lowerPrompt.includes('queimar')) {
-        conditionLabel = 'Está no Fogo?';
-        action1Label = 'Aplicar Fire Resistance (10s)';
-        action2Label = 'Spawn Partículas (Fogo)';
-      }
-
-      // Find the event node (we assume we are generating from "Ao atacar")
-      const eventId = getId();
-      const eventNode: Node = {
-        id: eventId,
-        type: 'custom',
-        position: { x: 100, y: 150 },
-        data: { label: 'Ao interagir / Evento', category: 'event' }
-      };
-
-      const conditionId = getId();
-      const action1Id = getId();
-      const action2Id = getId();
-
-      const conditionNode: Node = {
-        id: conditionId,
-        type: 'custom',
-        position: { x: 400, y: 150 },
-        data: { label: conditionLabel, category: 'condition' }
-      };
-
-      const action1Node: Node = {
-        id: action1Id,
-        type: 'custom',
-        position: { x: 700, y: 100 },
-        data: { label: action1Label, category: 'action' }
-      };
-
-      const action2Node: Node = {
-        id: action2Id,
-        type: 'custom',
-        position: { x: 700, y: 250 },
-        data: { label: action2Label, category: 'action' }
-      };
-
-      const edge1: Edge = {
-        id: `e${eventId}-${conditionId}`,
-        source: eventId,
-        target: conditionId,
+      const newEdges: Edge[] = irEdges.map(ire => ({
+        id: ire.id,
+        source: ire.source,
+        target: ire.target,
+        sourceHandle: ire.sourceHandle,
+        targetHandle: ire.targetHandle,
         animated: true,
         style: { stroke: '#EC4899', strokeWidth: 2 }
-      };
+      }));
 
-      const edge2: Edge = {
-        id: `e${conditionId}-${action1Id}`,
-        source: conditionId,
-        sourceHandle: 'true',
-        target: action1Id,
-        animated: true,
-        style: { stroke: '#10B981', strokeWidth: 2 }
-      };
+      setNodes((nds) => {
+        // Salvar nodo gerado por IA na palette
+        setAiCustomNodes(prev => [...prev, {
+           type: 'ai',
+           label: prompt.slice(0, 20) + (prompt.length > 20 ? '...' : ''),
+           color: 'text-pink-400',
+           icon: '🧠',
+           nodes: newNodes,
+           edges: newEdges
+        }]);
 
-      const edge3: Edge = {
-        id: `e${action1Id}-${action2Id}`,
-        source: action1Id,
-        target: action2Id,
-        animated: true,
-        style: { stroke: '#10B981', strokeWidth: 2 }
-      };
+        return nds.concat(newNodes);
+      });
 
-      setEdges(eds => eds.concat(edge1, edge2, edge3));
-      
-      // Salvar nodo gerado por IA na palette
-      setAiCustomNodes(prev => [...prev, {
-         type: 'ai',
-         label: prompt.slice(0, 20) + '...',
-         color: 'text-pink-400',
-         icon: '🧠',
-         nodes: [eventNode, conditionNode, action1Node, action2Node],
-         edges: [edge1, edge2, edge3]
-      }]);
-
-      // Just visually replace or add
-      return nds.concat(eventNode, conditionNode, action1Node, action2Node);
-    });
+      setEdges(eds => eds.concat(newEdges));
+    }
   }, [setNodes, setEdges]);
 
   const onDrop = useCallback(
