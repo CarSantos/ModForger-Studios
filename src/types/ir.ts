@@ -14,7 +14,7 @@ export interface ItemIR {
   id: string;
   registryName: string;
   displayName: string;
-  type: 'sword' | 'pickaxe' | 'food' | 'material' | 'ranged';
+  type: 'sword' | 'pickaxe' | 'axe' | 'shovel' | 'hoe' | 'shield' | 'armor' | 'food' | 'material' | 'ranged';
   maxStackSize: number;
   logicGraphId?: string; // Reference to a logic graph to execute on use
 }
@@ -25,6 +25,13 @@ export interface BlockIR {
   displayName: string;
   material: string;
   hardness: number;
+  blastResistance?: number;
+  enchantability?: number;
+  stackSize?: number;
+  drops?: { item: string, min: number, max: number, chance: number, condition: string }[];
+  effectTrigger?: string;
+  effectRadius?: number;
+  effectType?: string;
 }
 
 export interface EntityIR {

@@ -40,6 +40,9 @@ const getId = () => `dndnode_${id++}`;
 const NODE_PALETTE = [
   { type: 'event', label: 'Ao interagir', color: 'text-yellow-400', icon: '⚡' },
   { type: 'event', label: 'Ao atacar', color: 'text-yellow-400', icon: '⚔️' },
+  { type: 'event', label: 'On Item Eaten', color: 'text-yellow-400', icon: '🍎' },
+  { type: 'event', label: 'On Item in HandTick', color: 'text-yellow-400', icon: '⏱️' },
+  { type: 'event', label: 'On Block Destroyed', color: 'text-yellow-400', icon: '⛏️' },
   { type: 'event', label: 'On Player Login', color: 'text-yellow-400', icon: '👤' },
   { type: 'event', label: 'On Block Break', color: 'text-yellow-400', icon: '⛏️' },
   { type: 'event', label: 'On Entity Spawn', color: 'text-yellow-400', icon: '🥚' },
@@ -174,7 +177,11 @@ function DnDFlow() {
           id: irn.id,
           type: irn.type,
           position: irn.position,
-          data: { label: irn.label, category: irn.category, ...irn.data }
+          data: { 
+             label: irn.data?.label || irn.label || 'Node', 
+             category: irn.data?.category || irn.category || 'action', 
+             ...irn.data 
+          }
         })));
       });
 

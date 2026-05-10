@@ -33,7 +33,7 @@ export default function App() {
       <Sidebar projectSettings={projectSettings} activeView={activeView} setActiveView={setActiveView} />
       <div className="flex flex-col flex-1">
         <TopBar projectSettings={projectSettings} />
-        {activeView === 'Dashboard' && <DashboardView projectSettings={projectSettings} setProjectSettings={setProjectSettings} />}
+        {activeView === 'Dashboard' && <DashboardView projectSettings={projectSettings} setProjectSettings={setProjectSettings} setActiveView={setActiveView} />}
         {activeView === 'Blocos' && <BlockEditor setActiveView={setActiveView} />}
         {activeView === 'Itens' && <ItemEditor />}
         {activeView === 'Projéteis' && <ProjectileEditor />}
@@ -47,7 +47,7 @@ export default function App() {
         {activeView === 'Receitas' && <RecipeEditor />}
         {activeView === 'Lógica (Nodos)' && <NodeEditor />}
         {activeView === 'Sistemas Custom' && <CustomSystemsEditor setActiveView={setActiveView} />}
-        {activeView === 'Configurações' && <SettingsEditor projectSettings={projectSettings} setProjectSettings={setProjectSettings} />}
+        {activeView === 'Configurações do Projeto' && <SettingsEditor projectSettings={projectSettings} setProjectSettings={setProjectSettings} />}
       </div>
     </div>
   );

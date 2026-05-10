@@ -24,7 +24,7 @@ export const Sidebar = ({ projectSettings, activeView, setActiveView }: SidebarP
     { name: 'Receitas', icon: FileJson },
     { name: 'Lógica (Nodos)', icon: Component },
     { name: 'Sistemas Custom', icon: Beaker },
-    { name: 'Configurações', icon: Settings },
+    { name: 'Configurações do Projeto', icon: Settings },
   ];
 
   return (

@@ -98,50 +98,14 @@ export const DashboardView = ({ projectSettings, setProjectSettings, setActiveVi
         </header>
 
         <div className="grid grid-cols-3 gap-6">
-          <div className="col-span-2 bg-white/[0.02] border border-white/10 rounded-2xl p-6 backdrop-blur-sm">
-            <h3 className="text-white font-bold mb-4 border-b border-white/5 pb-2">Informações Base</h3>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-white/60 mb-1">Nome do Mod</label>
-                <input 
-                  type="text" 
-                  value={modName} 
-                  onChange={(e) => setModName(e.target.value)} 
-                  className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none transition-all" 
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-white/60 mb-1">Versão do Jogo (Loader: NeoForge)</label>
-                  <select 
-                    value={mcVersion} 
-                    onChange={(e) => setMcVersion(e.target.value)}
-                    className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none transition-all cursor-pointer"
-                  >
-                    {loaderVersions.map(v => (
-                      <option key={v} value={v}>{v}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-white/60 mb-1">Versão do Mod</label>
-                  <input 
-                    type="text" 
-                    value={modVersion} 
-                    onChange={(e) => setModVersion(e.target.value)} 
-                    className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none transition-all" 
-                  />
-                </div>
-              </div>
+          <div className="col-span-3 bg-white/[0.02] border border-white/10 rounded-2xl p-6 backdrop-blur-sm flex items-center gap-6">
+            <div className="w-24 h-24 bg-black/40 border-2 border-dashed border-white/10 rounded-xl flex items-center justify-center flex-col text-white/30 cursor-pointer hover:border-amber-500/50 hover:bg-amber-500/5 transition-colors group">
+              <ImageIcon size={32} className="mb-2 group-hover:text-amber-500 transition-colors" />
+              <span className="text-[10px] group-hover:text-amber-200 transition-colors">pack.png</span>
             </div>
-          </div>
-
-          <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 backdrop-blur-sm flex flex-col">
-            <h3 className="text-white font-bold mb-4 border-b border-white/5 pb-2">Logotipo do Mod</h3>
-            <div className="flex-1 w-full bg-black/40 border-2 border-dashed border-white/10 rounded-xl flex items-center justify-center flex-col text-white/30 cursor-pointer hover:border-amber-500/50 hover:bg-amber-500/5 transition-colors group">
-              <ImageIcon size={48} className="mb-2 group-hover:text-amber-500 transition-colors" />
-              <span className="text-xs group-hover:text-amber-200 transition-colors">Importar pack.png</span>
+            <div>
+               <h3 className="text-white font-bold text-xl">{projectSettings.name}</h3>
+               <p className="text-white/40 text-sm">Versão {projectSettings.version} • {projectSettings.loader || 'NeoForge'}</p>
             </div>
           </div>
         </div>
@@ -267,7 +231,7 @@ export const DashboardView = ({ projectSettings, setProjectSettings, setActiveVi
               <div 
                 key={`struct-${idx}`} 
                 className="bg-black/40 border border-white/10 hover:border-white/20 rounded-xl p-4 cursor-pointer transition-colors group"
-                onClick={() => handleOpenElement(struct.id, 'structure', 'Estruturas')}
+                onClick={() => handleOpenElement(struct.id, 'structure', 'Mundo')}
               >
                 <div className="flex justify-between items-start mb-3">
                   <div className={`w-8 h-8 rounded-lg bg-amber-500/20 text-amber-500 flex items-center justify-center border border-amber-500/30`}>

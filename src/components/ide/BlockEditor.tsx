@@ -1,20 +1,61 @@
 import { FileCode2, Sparkles, Box, Droplet, Zap, Star, Shield, Image as ImageIcon } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useModStore } from '../../store/modStore';
+import { BlockIR } from '../../types/ir';
 
 export const BlockEditor = ({ setActiveView }: { setActiveView?: (view: string) => void }) => {
-  const [textureFront, setTextureFront] = useState<string | null>(null);
-  const [stackSize, setStackSize] = useState(64);
-  const [drops, setDrops] = useState([{ item: 'super_minerio', min: 1, max: 1, chance: 100, condition: 'always' }]);
-  const [hardness, setHardness] = useState(3.0);
-  const [blastResistance, setBlastResistance] = useState(3.0);
-  const [effectType, setEffectType] = useState('none');
-  const [effectTrigger, setEffectTrigger] = useState('step'); // step or proximity
-  const [effectRadius, setEffectRadius] = useState(3);
-  const [enchantability, setEnchantability] = useState(0);
+  const store = useModStore();
+  const [activeBlock, setActiveBlock] = useState<BlockIR | null>(null);
+
+  useEffect(() => {
+    if (store.activeElementId && store.activeElementType === 'block') {
+      const found = store.blocks.find(b => b.id === store.activeElementId);
+      if (found) setActiveBlock(found);
+    } else {
+      if (store.blocks.length > 0) {
+        setActiveBlock(store.blocks[0]);
+      }
+    }
+  }, [store.activeElementId, store.activeElementType, store.blocks]);
+
+  const updateActiveBlock = (updates: Partial<BlockIR>) => {
+    if (!activeBlock) return;
+    store.updateBlock(activeBlock.id, updates);
+  };
 
   const addDrop = () => {
-    setDrops([...drops, { item: 'minecraft:cobblestone', min: 1, max: 1, chance: 100, condition: 'always' }]);
+    if (!activeBlock) return;
+    const currentDrops = activeBlock.drops || [];
+    updateActiveBlock({ drops: [...currentDrops, { item: 'minecraft:cobblestone', min: 1, max: 1, chance: 100, condition: 'always' }] });
   };
+
+  if (!activeBlock) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center bg-[radial-gradient(circle_at_top_right,_#1a1510_0%,_#0A0A0C_60%)] relative overflow-hidden">
+        <Box className="text-white/20 w-16 h-16 mb-4" />
+        <p className="text-white/50 mb-4">Nenhum Bloco selecionado ou criado.</p>
+        <button 
+          onClick={() => {
+            const newBlock: BlockIR = { 
+              id: Math.random().toString(36).substr(2, 9), 
+              registryName: 'mymod:custom_block', 
+              displayName: 'Custom Block',
+              material: 'rock',
+              hardness: 3.0,
+              drops: []
+            };
+            store.addBlock(newBlock);
+            store.openElement(newBlock.id, 'block');
+          }}
+          className="bg-amber-500 hover:bg-amber-400 text-black px-4 py-2 rounded-lg font-bold shadow-[0_0_15px_rgba(245,158,11,0.3)] transition-colors"
+        >
+          Criar Novo Bloco
+        </button>
+      </div>
+    );
+  }
+
+  const drops = activeBlock.drops || [];
 
   return (
     <div className="flex-1 bg-[radial-gradient(circle_at_top_right,_#1a1510_0%,_#0A0A0C_60%)] flex flex-col relative overflow-hidden">
@@ -36,11 +77,11 @@ export const BlockEditor = ({ setActiveView }: { setActiveView?: (view: string) 
                  <div className="space-y-4">
                    <div>
                      <label className="block text-xs font-semibold text-white/60 mb-1">Nome no Jogo</label>
-                     <input type="text" defaultValue="Super Minério" className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none transition-all" />
+                     <input type="text" value={activeBlock.displayName} onChange={e => updateActiveBlock({ displayName: e.target.value })} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none transition-all" />
                    </div>
                    <div>
                      <label className="block text-xs font-semibold text-white/60 mb-1">Namespace ID</label>
-                     <input type="text" defaultValue="super_minerio" className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white/50 focus:border-amber-500 outline-none transition-all" />
+                     <input type="text" value={activeBlock.registryName} onChange={e => updateActiveBlock({ registryName: e.target.value })} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white/50 focus:border-amber-500 outline-none transition-all" />
                    </div>
                  </div>
               </div>
@@ -64,19 +105,19 @@ export const BlockEditor = ({ setActiveView }: { setActiveView?: (view: string) 
                  <div className="space-y-4">
                    <div>
                      <label className="block text-xs font-semibold text-white/60 mb-1">Dureza (Tempo para quebrar)</label>
-                     <input type="number" step="0.1" value={hardness} onChange={e => setHardness(Number(e.target.value))} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none" />
+                     <input type="number" step="0.1" value={activeBlock.hardness} onChange={e => updateActiveBlock({ hardness: Number(e.target.value) })} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none" />
                    </div>
                    <div>
                      <label className="block text-xs font-semibold text-white/60 mb-1">Resistência a Explosões</label>
-                     <input type="number" step="0.1" value={blastResistance} onChange={e => setBlastResistance(Number(e.target.value))} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none" />
+                     <input type="number" step="0.1" value={activeBlock.blastResistance || 3.0} onChange={e => updateActiveBlock({ blastResistance: Number(e.target.value) })} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none" />
                    </div>
                    <div>
                      <label className="block text-xs font-semibold text-white/60 mb-1 flex items-center gap-2"><Star size={12}/> Nível de Encantamento</label>
-                     <input type="number" value={enchantability} onChange={e => setEnchantability(Number(e.target.value))} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none" />
+                     <input type="number" value={activeBlock.enchantability || 0} onChange={e => updateActiveBlock({ enchantability: Number(e.target.value) })} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none" />
                    </div>
                    <div>
                      <label className="block text-xs font-semibold text-white/60 mb-1">Tamanho Máx. do Stack</label>
-                     <select value={stackSize} onChange={e => setStackSize(Number(e.target.value))} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none cursor-pointer">
+                     <select value={activeBlock.stackSize || 64} onChange={e => updateActiveBlock({ stackSize: Number(e.target.value) })} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none cursor-pointer">
                        <option value={64}>64 (Padrão)</option>
                        <option value={16}>16 (Bolas de neve, ender pearls)</option>
                        <option value={1}>1 (Ferramentas, armaduras)</option>
@@ -96,11 +137,14 @@ export const BlockEditor = ({ setActiveView }: { setActiveView?: (view: string) 
                  <div className="space-y-4 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
                    {drops.map((drop, idx) => (
                      <div key={idx} className="bg-black/40 border border-white/5 rounded-lg p-3 space-y-2 relative">
-                        <button onClick={() => setDrops(drops.filter((_, i) => i !== idx))} className="absolute top-2 right-2 text-white/20 hover:text-red-400 text-xs">⨯ Remover</button>
+                        <button onClick={() => {
+                          const newDrops = drops.filter((_, i) => i !== idx);
+                          updateActiveBlock({ drops: newDrops });
+                        }} className="absolute top-2 right-2 text-white/20 hover:text-red-400 text-xs">⨯ Remover</button>
                         <div>
                           <label className="block text-[10px] font-semibold text-white/60 mb-1">Item a Dropar</label>
                           <input type="text" value={drop.item} onChange={e => {
-                            const newDrops = [...drops]; newDrops[idx].item = e.target.value; setDrops(newDrops);
+                            const newDrops = [...drops]; newDrops[idx].item = e.target.value; updateActiveBlock({ drops: newDrops });
                           }} className="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-xs text-white focus:border-amber-500 outline-none" />
                         </div>
                         <div className="grid grid-cols-2 gap-2">
@@ -108,25 +152,25 @@ export const BlockEditor = ({ setActiveView }: { setActiveView?: (view: string) 
                             <label className="block text-[10px] font-semibold text-white/60 mb-1">Qtd Mín/Máx</label>
                             <div className="flex gap-1">
                                <input type="number" min="0" value={drop.min} onChange={e => {
-                                 const newDrops = [...drops]; newDrops[idx].min = Number(e.target.value); setDrops(newDrops);
+                                 const newDrops = [...drops]; newDrops[idx].min = Number(e.target.value); updateActiveBlock({ drops: newDrops });
                                }} className="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-xs text-white focus:border-amber-500 outline-none" />
                                <span className="text-white/30 flex items-center">-</span>
                                <input type="number" min="0" value={drop.max} onChange={e => {
-                                 const newDrops = [...drops]; newDrops[idx].max = Number(e.target.value); setDrops(newDrops);
+                                 const newDrops = [...drops]; newDrops[idx].max = Number(e.target.value); updateActiveBlock({ drops: newDrops });
                                }} className="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-xs text-white focus:border-amber-500 outline-none" />
                             </div>
                           </div>
                           <div>
                             <label className="block text-[10px] font-semibold text-white/60 mb-1">Chance (%)</label>
                             <input type="number" min="0" max="100" value={drop.chance} onChange={e => {
-                                 const newDrops = [...drops]; newDrops[idx].chance = Number(e.target.value); setDrops(newDrops);
+                                 const newDrops = [...drops]; newDrops[idx].chance = Number(e.target.value); updateActiveBlock({ drops: newDrops });
                             }} className="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-xs text-white focus:border-amber-500 outline-none" />
                           </div>
                         </div>
                         <div>
                           <label className="block text-[10px] font-semibold text-white/60 mb-1">Condição</label>
                           <select value={drop.condition} onChange={e => {
-                             const newDrops = [...drops]; newDrops[idx].condition = e.target.value; setDrops(newDrops);
+                             const newDrops = [...drops]; newDrops[idx].condition = e.target.value; updateActiveBlock({ drops: newDrops });
                           }} className="w-full bg-black/40 border border-white/10 rounded px-2 py-1 text-xs text-white focus:border-amber-500 outline-none cursor-pointer">
                             <option value="always">Sempre dropa</option>
                             <option value="right_tool">Apenas com ferramenta certa</option>
@@ -149,27 +193,27 @@ export const BlockEditor = ({ setActiveView }: { setActiveView?: (view: string) 
                      <label className="block text-xs font-semibold text-white/60 mb-1 flex items-center gap-2"><Zap size={12}/> Tipo de Ativação</label>
                      <div className="flex gap-4 mt-2">
                        <label className="flex items-center gap-2 text-sm text-white/80 cursor-pointer">
-                          <input type="radio" name="trigger" value="step" checked={effectTrigger === 'step'} onChange={(e) => setEffectTrigger(e.target.value)} className="accent-amber-500" />
+                          <input type="radio" name="trigger" value="step" checked={activeBlock.effectTrigger === 'step'} onChange={(e) => updateActiveBlock({ effectTrigger: e.target.value })} className="accent-amber-500" />
                           Pisando
                        </label>
                        <label className="flex items-center gap-2 text-sm text-white/80 cursor-pointer">
-                          <input type="radio" name="trigger" value="proximity" checked={effectTrigger === 'proximity'} onChange={(e) => setEffectTrigger(e.target.value)} className="accent-amber-500" />
+                          <input type="radio" name="trigger" value="proximity" checked={activeBlock.effectTrigger === 'proximity'} onChange={(e) => updateActiveBlock({ effectTrigger: e.target.value })} className="accent-amber-500" />
                           Proximidade (Raio Mágico/Magnético)
                        </label>
                      </div>
                    </div>
 
-                   {effectTrigger === 'proximity' && (
+                   {activeBlock.effectTrigger === 'proximity' && (
                      <div>
                        <label className="block text-xs font-semibold text-white/60 mb-1">Raio de Ação (Blocos)</label>
-                       <input type="range" min="1" max="15" value={effectRadius} onChange={(e) => setEffectRadius(Number(e.target.value))} className="w-full accent-amber-500" />
-                       <p className="text-right text-xs text-amber-500 font-mono mt-1">{effectRadius} Blocos</p>
+                       <input type="range" min="1" max="15" value={activeBlock.effectRadius || 3} onChange={(e) => updateActiveBlock({ effectRadius: Number(e.target.value) })} className="w-full accent-amber-500" />
+                       <p className="text-right text-xs text-amber-500 font-mono mt-1">{activeBlock.effectRadius || 3} Blocos</p>
                      </div>
                    )}
 
                    <div>
                      <label className="block text-xs font-semibold text-white/60 mb-1">Efeito Causado</label>
-                     <select value={effectType} onChange={e => setEffectType(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none cursor-pointer">
+                     <select value={activeBlock.effectType || 'none'} onChange={e => updateActiveBlock({ effectType: e.target.value })} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none cursor-pointer">
                        <option value="none">Nenhum</option>
                        <option value="damage">Dano Ígneo/Queimadura (Como Magma)</option>
                        <option value="slowness">Lentidão (Como Areia das Almas, Teia)</option>
@@ -180,11 +224,11 @@ export const BlockEditor = ({ setActiveView }: { setActiveView?: (view: string) 
                      </select>
                    </div>
                    
-                   {effectType === 'custom' && (
+                   {activeBlock.effectType === 'custom' && (
                      <div className="mt-4">
                        <label className="block text-xs font-semibold text-white/50 mb-2 uppercase tracking-widest">Ação Customizada (Lógica)</label>
                        <button onClick={() => setActiveView && setActiveView('Lógica (Nodos)')} className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-sm font-bold text-amber-500 hover:bg-amber-500/10 transition-colors flex items-center justify-center gap-2">
-                          + Adicionar Ação Nodal ao {effectTrigger === 'proximity' ? 'Entrar no Raio' : 'Colidir/Pisar'}
+                          + Adicionar Ação Nodal ao {activeBlock.effectTrigger === 'proximity' ? 'Entrar no Raio' : 'Colidir/Pisar'}
                        </button>
                      </div>
                    )}

@@ -18,7 +18,8 @@ interface ModState {
   addItem: (item: ItemIR) => void;
   updateItem: (id: string, updates: Partial<ItemIR>) => void;
   addBlock: (block: BlockIR) => void;
-  // (You would add actions for other element types here as needed)
+  updateBlock: (id: string, updates: Partial<BlockIR>) => void;
+  deleteBlock: (id: string) => void;
   
   addStructure: (structure: StructureIR) => void;
   updateStructure: (id: string, updates: Partial<StructureIR>) => void;
@@ -62,6 +63,10 @@ export const useModStore = create<ModState>()(
           items: state.items.map(i => i.id === id ? { ...i, ...updates } : i)
       })),
       addBlock: (block) => set((state) => ({ blocks: [...state.blocks, block] })),
+      updateBlock: (id, updates) => set((state) => ({
+          blocks: state.blocks.map(b => b.id === id ? { ...b, ...updates } : b)
+      })),
+      deleteBlock: (id) => set((state) => ({ blocks: state.blocks.filter(b => b.id !== id) })),
       
       addStructure: (structure) => set((state) => ({ structures: [...state.structures, structure] })),
       updateStructure: (id, updates) => set((state) => ({

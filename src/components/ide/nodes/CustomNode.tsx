@@ -91,7 +91,7 @@ export function CustomNode({ id, data, isConnectable }: NodeProps) {
         {category === 'data_math' && label === 'Número Específico' && (
            <input 
               type="number" 
-              value={data.value || 0}
+              value={(data.value as number) || 0}
               onChange={e => setNodes(nds => nds.map(n => n.id === id ? { ...n, data: { ...n.data, value: Number(e.target.value) } } : n))}
               className="w-full bg-black/40 border border-blue-500/50 rounded p-1 text-xs text-white focus:outline-none nodrag mt-2" 
            />
@@ -101,14 +101,14 @@ export function CustomNode({ id, data, isConnectable }: NodeProps) {
              <input 
                 type="number" 
                 placeholder="Min" 
-                value={data.min || 0}
+                value={(data.min as number) || 0}
                 onChange={e => setNodes(nds => nds.map(n => n.id === id ? { ...n, data: { ...n.data, min: Number(e.target.value) } } : n))}
                 className="w-1/2 bg-black/40 border border-blue-500/50 rounded p-1 text-xs text-white focus:outline-none nodrag" 
              />
              <input 
                 type="number" 
                 placeholder="Max" 
-                value={data.max || 10}
+                value={(data.max as number) || 10}
                 onChange={e => setNodes(nds => nds.map(n => n.id === id ? { ...n, data: { ...n.data, max: Number(e.target.value) } } : n))}
                 className="w-1/2 bg-black/40 border border-blue-500/50 rounded p-1 text-xs text-white focus:outline-none nodrag" 
              />

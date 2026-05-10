@@ -33,8 +33,10 @@ export const ItemEditor = () => {
 
   // Helper values handling complex IR types gracefully
   const isFood = activeItem.type === 'food';
-  const isWeapon = activeItem.type === 'weapon' || activeItem.type === 'sword';
-  const isTool = activeItem.type === 'tool' || activeItem.type === 'pickaxe' || activeItem.type === 'axe';
+  const isWeapon = ['sword', 'axe'].includes(activeItem.type);
+  const isTool = ['pickaxe', 'axe', 'shovel', 'hoe'].includes(activeItem.type);
+  const isArmor = activeItem.type === 'armor';
+  const isShield = activeItem.type === 'shield';
 
   return (
     <div className="flex-1 bg-[radial-gradient(circle_at_top_right,_#1a1510_0%,_#0A0A0C_60%)] flex relative overflow-hidden">
@@ -68,10 +70,15 @@ export const ItemEditor = () => {
                        <label className="block text-xs font-semibold text-white/60 mb-1">Registry</label>
                        <input type="text" value={activeItem.registryName} onChange={e => updateItem({ registryName: e.target.value })} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none mb-2" />
                        <label className="block text-xs font-semibold text-white/60 mb-1">Tipo</label>
-                       <select value={activeItem.type} onChange={e => updateItem({ type: e.target.value })} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none cursor-pointer mb-2">
+                       <select value={activeItem.type} onChange={e => updateItem({ type: e.target.value as any })} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none cursor-pointer mb-2">
                           <option value="item">Item Normal / Material</option>
-                          <option value="tool">Ferramenta</option>
-                          <option value="weapon">Arma</option>
+                          <option value="sword">Espada</option>
+                          <option value="pickaxe">Picareta</option>
+                          <option value="axe">Machado</option>
+                          <option value="shovel">Pá</option>
+                          <option value="hoe">Enxada</option>
+                          <option value="shield">Escudo</option>
+                          <option value="armor">Armadura</option>
                           <option value="food">Comida</option>
                        </select>
                        <label className="block text-xs font-semibold text-white/60 mb-1">Stack Máximo</label>
@@ -105,18 +112,49 @@ export const ItemEditor = () => {
                   </div>
                </div>
 
-               {(isWeapon || isTool) && (
+               {(isWeapon || isTool || isArmor || isShield) && (
                  <div className="col-span-full md:col-span-2 bg-white/[0.02] border border-white/10 rounded-2xl p-6 backdrop-blur-sm">
                     <h3 className="text-white font-bold mb-4 border-b border-white/5 pb-2 flex items-center gap-2"><Sword size={16}/> Combate e Utilidade</h3>
                     <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-[10px] font-semibold text-white/60 mb-1">Dano Base</label>
-                        <input type="number" step="0.5" defaultValue="5" className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none" />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] font-semibold text-white/60 mb-1">Velocidade de Ataque</label>
-                        <input type="number" step="0.1" defaultValue="1.6" className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none" />
-                      </div>
+                      {isWeapon && (
+                        <>
+                          <div>
+                            <label className="block text-[10px] font-semibold text-white/60 mb-1">Dano Base</label>
+                            <input type="number" step="0.5" value={(activeItem as any).attackDamage || 0} onChange={e => updateItem({ attackDamage: Number(e.target.value) } as any)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none" />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-semibold text-white/60 mb-1">Velocidade de Ataque</label>
+                            <input type="number" step="0.1" value={(activeItem as any).attackSpeed || 0} onChange={e => updateItem({ attackSpeed: Number(e.target.value) } as any)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none" />
+                          </div>
+                        </>
+                      )}
+                      
+                      {isTool && (
+                        <>
+                          <div>
+                            <label className="block text-[10px] font-semibold text-white/60 mb-1">Velocidade de Mineração (Eficiência)</label>
+                            <input type="number" step="0.5" value={(activeItem as any).miningSpeed || 0} onChange={e => updateItem({ miningSpeed: Number(e.target.value) } as any)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none" />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-semibold text-white/60 mb-1">Nível de Colheita (0=Madeira a 4=Netherite)</label>
+                            <input type="number" min="0" max="4" value={(activeItem as any).harvestLevel || 0} onChange={e => updateItem({ harvestLevel: Number(e.target.value) } as any)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none" />
+                          </div>
+                        </>
+                      )}
+
+                      {isArmor && (
+                        <>
+                          <div>
+                            <label className="block text-[10px] font-semibold text-white/60 mb-1">Proteção (Pontos de Armadura)</label>
+                            <input type="number" step="1" value={(activeItem as any).armorProtection || 0} onChange={e => updateItem({ armorProtection: Number(e.target.value) } as any)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none" />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-semibold text-white/60 mb-1">Dureza (Toughness)</label>
+                            <input type="number" step="0.5" value={(activeItem as any).armorToughness || 0} onChange={e => updateItem({ armorToughness: Number(e.target.value) } as any)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none" />
+                          </div>
+                        </>
+                      )}
+
                       <div className="col-span-2 pt-4 border-t border-white/5">
                          <button onClick={() => { store.openElement(activeItem.id, 'item'); setActiveView('Lógica (Nodos)'); }} className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-sm font-bold text-amber-500 hover:bg-amber-500/10 transition-colors flex items-center justify-center gap-2">
                             + Adicionar Lógica Nodal Dinâmica
