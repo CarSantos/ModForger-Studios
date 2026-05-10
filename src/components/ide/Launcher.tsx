@@ -8,9 +8,10 @@ interface LauncherProps {
 
 export interface ProjectSettings {
   name: string;
+  modId?: string;
   version: string;
   loader: string;
-  dependencies: string[];
+  dependencies: any[];
 }
 
 export const Launcher = ({ onStartProject }: LauncherProps) => {

@@ -1,111 +1,101 @@
-import { LogicGraphIR, NodeIR, EdgeIR, ItemIR } from '../types/ir';
+import { GoogleGenAI, Type } from '@google/genai';
 
-// Na versão final, isto fará um pedido real à API usando @google/genai
-export const generateModFromPrompt = async (prompt: string): Promise<{ items?: ItemIR[], logic?: LogicGraphIR }> => {
-  // Simulando o tempo de processamento da IA
-  await new Promise(resolve => setTimeout(resolve, 1500));
+// Initialize the GoogleGenAI client
+function getAIClient() {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error('GEMINI_API_KEY process environment variable is missing.');
+  }
+  return new GoogleGenAI({ apiKey });
+}
 
-  const lowerPrompt = prompt.toLowerCase();
+export const generateModNodes = async (prompt: string) => {
+  const ai = getAIClient();
   
-  const nodes: NodeIR[] = [];
-  const edges: EdgeIR[] = [];
-  
-  const generateId = () => Math.random().toString(36).substr(2, 9);
-  
-  if (lowerPrompt.includes('espada') || lowerPrompt.includes('sword') || lowerPrompt.includes('arma')) {
-    const isIce = lowerPrompt.includes('gelo') || lowerPrompt.includes('ice') || lowerPrompt.includes('congela');
-    const isFire = lowerPrompt.includes('fogo') || lowerPrompt.includes('fire') || lowerPrompt.includes('queima');
-    
-    // Gerar um Item IR (Espada)
-    const item: ItemIR = {
-      id: generateId(),
-      registryName: isIce ? 'minecraft:ice_sword' : isFire ? 'minecraft:fire_sword' : 'minecraft:custom_sword',
-      displayName: isIce ? 'Espada de Gelo' : isFire ? 'Espada de Fogo' : 'Espada Customizada',
-      type: 'sword',
-      maxStackSize: 1,
-    };
+  const systemInstruction = `
+    You are a Minecraft Modding expert working on ModForger Studios.
+    Your task is to generate React Flow nodes for Minecraft Mod logic based on the user's prompt.
+    You MUST respond with pure JSON ONLY. No markdown formatted blocks, no text before or after.
+    The nodes and edges should be compatible with @xyflow/react.
+    Categories for nodes can be: "event", "action", "condition", "data_math", "variable", "api", "item".
+    Each node must have an id, type (set to "custom"), position (x, y), and data.
+    The data object must contain "label" and "category".
+    Ids must be short random alphanumeric strings.
+  `;
 
-    // Gerar a Lógica IR para a Espada
-    const itemNodeId = generateId();
-    nodes.push({
-      id: itemNodeId,
-      type: 'custom',
-      category: 'item',
-      label: item.displayName,
-      position: { x: 100, y: 50 },
-      data: {
-        itemData: item
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+      config: {
+        systemInstruction,
+        responseMimeType: "application/json",
+        responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+                nodes: {
+                    type: Type.ARRAY,
+                    items: {
+                        type: Type.OBJECT,
+                        properties: {
+                            id: { type: Type.STRING },
+                            type: { type: Type.STRING },
+                            position: { 
+                                type: Type.OBJECT,
+                                properties: {
+                                    x: { type: Type.NUMBER },
+                                    y: { type: Type.NUMBER }
+                                },
+                                required: ["x", "y"]
+                            },
+                            data: {
+                                type: Type.OBJECT,
+                                properties: {
+                                    label: { type: Type.STRING },
+                                    category: { type: Type.STRING }
+                                },
+                                required: ["label", "category"]
+                            }
+                        },
+                        required: ["id", "type", "position", "data"]
+                    }
+                },
+                edges: {
+                    type: Type.ARRAY,
+                    items: {
+                        type: Type.OBJECT,
+                        properties: {
+                            id: { type: Type.STRING },
+                            source: { type: Type.STRING },
+                            target: { type: Type.STRING },
+                            sourceHandle: { type: Type.STRING },
+                            targetHandle: { type: Type.STRING }
+                        },
+                        required: ["id", "source", "target"]
+                    }
+                }
+            },
+            required: ["nodes", "edges"]
+        }
       }
     });
 
-    const eventNodeId = generateId();
-    nodes.push({
-      id: eventNodeId,
-      type: 'custom',
-      category: 'event',
-      label: 'Ao Atacar Entidade',
-      position: { x: 100, y: 150 }
-    });
+    let rawText = response.text;
+    if (!rawText) throw new Error("No text returned from AI");
 
-    const conditionNodeId = generateId();
-    nodes.push({
-      id: conditionNodeId,
-      type: 'custom',
-      category: 'condition',
-      label: 'É Inimigo?',
-      position: { x: 400, y: 150 }
-    });
+    // Sanitizer - just in case the AI ignored responseMimeType
+    const startIndex = rawText.indexOf('{');
+    const endIndex = rawText.lastIndexOf('}');
+    
+    if (startIndex !== -1 && endIndex !== -1) {
+       rawText = rawText.substring(startIndex, endIndex + 1);
+    }
+    
+    return JSON.parse(rawText);
 
-    const action1NodeId = generateId();
-    nodes.push({
-      id: action1NodeId,
-      type: 'custom',
-      category: 'action',
-      label: isIce ? 'Aplicar Slowness VI (10s)' : isFire ? 'Aplicar Fogo (10s)' : 'Tocar Som (Dano)',
-      position: { x: 700, y: 100 }
-    });
-
-    const action2NodeId = generateId();
-    nodes.push({
-      id: action2NodeId,
-      type: 'custom',
-      category: 'action',
-      label: isIce ? 'Spawn Partículas (Gelo)' : isFire ? 'Spawn Partículas (Fogo)' : 'Efeito de Partículas',
-      position: { x: 700, y: 250 }
-    });
-
-    edges.push({ id: `e_${itemNodeId}_${eventNodeId}`, source: itemNodeId, target: eventNodeId });
-    edges.push({ id: `e_${eventNodeId}_${conditionNodeId}`, source: eventNodeId, target: conditionNodeId });
-    edges.push({ id: `e_${conditionNodeId}_${action1NodeId}`, source: conditionNodeId, target: action1NodeId, sourceHandle: 'true' });
-    edges.push({ id: `e_${action1NodeId}_${action2NodeId}`, source: action1NodeId, target: action2NodeId });
-
-    return {
-      items: [item],
-      logic: { id: generateId(), nodes, edges }
-    };
+  } catch (err: any) {
+    console.error("AI Generation Error", err);
+    throw new Error(err.message || "Failed to generate nodes");
   }
-  
-  // Default fallback
-  const eventNodeId = generateId();
-  const actionNodeId = generateId();
-  
-  nodes.push({
-    id: eventNodeId,
-    type: 'custom',
-    category: 'event',
-    label: 'Evento Customizado',
-    position: { x: 100, y: 150 }
-  });
-  nodes.push({
-    id: actionNodeId,
-    type: 'custom',
-    category: 'action',
-    label: 'Log no Servidor',
-    position: { x: 400, y: 150 }
-  });
-  edges.push({ id: `e_${eventNodeId}_${actionNodeId}`, source: eventNodeId, target: actionNodeId });
-
-  return {
-    logic: { id: generateId(), nodes, edges }
-  };
 };
+

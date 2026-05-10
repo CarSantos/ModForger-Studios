@@ -1,9 +1,12 @@
-import { useState, DragEvent } from 'react';
-import { Globe, Map, Mountain, Upload, Sparkles, Moon, Sun, Trees, Droplets, Droplets as DropletDrop } from 'lucide-react';
+import { useState, DragEvent, useEffect } from 'react';
+import { Globe, Map, Mountain, Upload, Sparkles, Moon, Sun, Trees, Droplets, Droplets as DropletDrop, AlignVerticalSpaceAround, Box, Crosshair, Skull } from 'lucide-react';
+import { useModStore } from '../../store/modStore';
+import { StructureIR } from '../../types/ir';
 
-export const WorldEditor = ({ setActiveView }: { setActiveView?: (view: string) => void }) => {
+export const WorldEditor = () => {
   const [activeTab, setActiveTab] = useState('biomes');
-
+  const store = useModStore();
+  
   // Biome state
   const [grassColor, setGrassColor] = useState('#7C9E2E');
   const [waterColor, setWaterColor] = useState('#3F76E4');
@@ -18,9 +21,29 @@ export const WorldEditor = ({ setActiveView }: { setActiveView?: (view: string) 
   const [portalBlock, setPortalBlock] = useState('minecraft:obsidian');
   const [dimensionBiomes, setDimensionBiomes] = useState(['minecraft:plains']);
 
-  // Structure state
-  const [structures, setStructures] = useState<{name: string, rarity: number, biomes: string[], creatures: string[]}[]>([]);
-  const [dragActive, setDragActive] = useState(false);
+  // Structure state (from store)
+  const [activeStruct, setActiveStruct] = useState<StructureIR | null>(null);
+  
+  useEffect(() => {
+    if (store.activeElementId && store.activeElementType === 'structure') {
+      const found = store.structures.find(s => s.id === store.activeElementId);
+      if (found) setActiveStruct(found);
+      setActiveTab('structures');
+    } else {
+      if (store.structures.length > 0) {
+        setActiveStruct(store.structures[0]);
+      }
+    }
+  }, [store.activeElementId, store.activeElementType, store.structures]);
+
+  const updateActiveStruct = (updates: Partial<StructureIR>) => {
+    if (!activeStruct) return;
+    store.updateStructure(activeStruct.id, updates);
+  };
+
+  const setDragActive = (active: boolean) => {
+     // No op for now, logic rewritten below
+  };
 
   // Event state
   const [eventName, setEventName] = useState('Blood Moon');
@@ -33,12 +56,11 @@ export const WorldEditor = ({ setActiveView }: { setActiveView?: (view: string) 
 
   const handleStructureDrop = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    setDragActive(false);
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      const newStructures = Array.from(e.dataTransfer.files)
-        .filter((f: File) => f.name.endsWith('.nbt') || f.name.endsWith('.schem'))
-        .map((f: File) => ({ name: f.name, rarity: 50, biomes: ['minecraft:plains'], creatures: [] }));
-      setStructures([...structures, ...newStructures]);
+      const file = Array.from(e.dataTransfer.files).find((f: File) => f.name.endsWith('.nbt') || f.name.endsWith('.bbmodel') || f.name.endsWith('.schem'));
+      if (file && activeStruct) {
+          updateActiveStruct({ registryName: 'mymod:' + file.name.replace(/\.[^/.]+$/, "") });
+      }
     }
   };
 
@@ -232,119 +254,130 @@ export const WorldEditor = ({ setActiveView }: { setActiveView?: (view: string) 
             )}
 
             {activeTab === 'structures' && (
-              <>
-                <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 backdrop-blur-sm">
-                  <h3 className="text-white font-bold mb-4 border-b border-white/5 pb-2">Importar Estrutura</h3>
-                  
-                  <div 
-                    className={`w-full border-2 border-dashed ${dragActive ? 'border-amber-500 bg-amber-500/5' : 'border-white/10 bg-black/40'} rounded-xl p-8 flex flex-col items-center justify-center text-center transition-all cursor-pointer relative`}
-                    onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
-                    onDragLeave={() => setDragActive(false)}
-                    onDrop={handleStructureDrop}
-                  >
-                    <Upload size={32} className={`mb-3 ${dragActive ? 'text-amber-500' : 'text-white/20'}`} />
-                    <span className="text-sm text-white/60 font-medium">Arraste ficheiros <span className="text-amber-500">.nbt</span> ou <span className="text-amber-500">.schem</span></span>
-                    <span className="text-xs text-white/30 mt-1">Geração via WorldEdit ou nativa</span>
-                    <input type="file" accept=".nbt,.schem" multiple className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" onChange={(e) => {
-                      if (e.target.files) {
-                        const newStructures = Array.from(e.target.files).map((f: File) => ({ name: f.name, rarity: 50, biomes: ['minecraft:plains'], creatures: [] }));
-                        setStructures([...structures, ...newStructures]);
-                      }
-                    }}/>
-                  </div>
-                </div>
-
-                <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 backdrop-blur-sm">
-                  <h3 className="text-white font-bold mb-4 border-b border-white/5 pb-2">Estruturas Registadas</h3>
-                  <div className="space-y-3">
-                    {structures.length === 0 ? (
-                      <div className="text-center py-8 text-white/30 text-sm">Nenhuma estrutura carregada.</div>
-                    ) : (
-                      structures.map((struct, idx) => (
-                        <div key={idx} className="bg-black/40 border border-white/5 rounded-lg p-3 flex flex-col gap-2 relative">
-                          <button onClick={() => setStructures(structures.filter((_, i) => i !== idx))} className="absolute top-2 right-2 text-white/20 hover:text-red-400 text-xs">⨯ Remover</button>
-                          <div className="flex items-center justify-between mt-2">
-                            <span className="font-mono text-xs text-amber-400">{struct.name}</span>
-                            <span className="text-[10px] text-white/40 uppercase">Rarity / Spawns</span>
-                          </div>
-                          
-                          <div className="mt-1">
-                            <label className="text-[10px] text-white/40 uppercase tracking-widest block mb-1">Chance de Geração (Raridade na chunk)</label>
-                            <div className="flex items-center gap-3">
-                              <input type="range" min="1" max="1000" value={struct.rarity} onChange={(e) => {
-                                 const newStructs = [...structures];
-                                 newStructs[idx].rarity = Number(e.target.value);
-                                 setStructures(newStructs);
-                              }} className="flex-1 accent-amber-500" />
-                              <span className="text-xs text-white/50 w-12 text-right">1 in {struct.rarity}</span>
-                            </div>
-                          </div>
-                          
-                          <div className="mt-2 pt-2 border-t border-white/5">
-                            <label className="text-[10px] text-white/40 uppercase tracking-widest block mb-1">Biomas em que spawna</label>
-                            <div className="flex gap-2">
-                              <input type="text" placeholder="Adicionar bioma... ex: minecraft:forest" className="flex-1 bg-black/40 border border-white/10 rounded px-2 py-1 text-xs text-white focus:border-amber-500 outline-none" onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                  const val = e.currentTarget.value;
-                                  if (val && !struct.biomes.includes(val)) {
-                                    const newStructs = [...structures];
-                                    newStructs[idx].biomes.push(val);
-                                    setStructures(newStructs);
-                                    e.currentTarget.value = '';
-                                  }
-                                }
-                              }}/>
-                            </div>
-                            <div className="flex flex-wrap gap-1 mt-2">
-                              {struct.biomes.map((b, bIdx) => (
-                                <span key={bIdx} className="bg-white/5 text-white/60 text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1">
-                                  {b}
-                                  <button onClick={() => {
-                                    const newStructs = [...structures];
-                                    newStructs[idx].biomes = newStructs[idx].biomes.filter(x => x !== b);
-                                    setStructures(newStructs);
-                                  }} className="hover:text-red-400">×</button>
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-
-                          <div className="mt-2 pt-2 border-t border-white/5">
-                            <label className="text-[10px] text-white/40 uppercase tracking-widest block mb-1">Criaturas que spawn na estrutura</label>
-                            <div className="flex gap-2">
-                              <input type="text" placeholder="Adicionar criatura... ex: minecraft:zombie" className="flex-1 bg-black/40 border border-white/10 rounded px-2 py-1 text-xs text-white focus:border-amber-500 outline-none" onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                  const val = e.currentTarget.value;
-                                  if (val && !(struct.creatures || []).includes(val)) {
-                                    const newStructs = [...structures];
-                                    if (!newStructs[idx].creatures) newStructs[idx].creatures = [];
-                                    newStructs[idx].creatures.push(val);
-                                    setStructures(newStructs);
-                                    e.currentTarget.value = '';
-                                  }
-                                }
-                              }}/>
-                            </div>
-                            <div className="flex flex-wrap gap-1 mt-2">
-                              {(struct.creatures || []).map((c, cIdx) => (
-                                <span key={cIdx} className="bg-red-500/10 text-red-300 border border-red-500/20 text-[10px] px-1.5 py-0.5 rounded flex items-center gap-1">
-                                  {c}
-                                  <button onClick={() => {
-                                    const newStructs = [...structures];
-                                    newStructs[idx].creatures = newStructs[idx].creatures.filter(x => x !== c);
-                                    setStructures(newStructs);
-                                  }} className="hover:text-red-400">×</button>
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              </>
+              <div className="col-span-full">
+                 {!activeStruct ? (
+                   <div className="flex-1 flex flex-col items-center justify-center relative overflow-hidden bg-white/[0.02] border border-white/10 rounded-2xl p-12">
+                     <AlignVerticalSpaceAround className="text-white/20 w-16 h-16 mb-4" />
+                     <p className="text-white/50 mb-4">Nenhuma Estrutura selecionada ou criada.</p>
+                     <button 
+                       onClick={() => {
+                         const newStruct: StructureIR = { 
+                            id: Math.random().toString(36).substr(2, 9), 
+                            registryName: 'mymod:custom_struct', 
+                            displayName: 'Nova Estrutura',
+                            spawnBiomes: [],
+                            surfaceType: 'surface',
+                            spawnProbability: 10,
+                            entitySpawns: []
+                         };
+                         store.addStructure(newStruct);
+                         store.openElement(newStruct.id, 'structure');
+                       }}
+                       className="bg-amber-500 hover:bg-amber-400 text-black px-4 py-2 rounded-lg font-bold shadow-[0_0_15px_rgba(245,158,11,0.3)] transition-colors"
+                     >
+                       Criar Nova Estrutura
+                     </button>
+                   </div>
+                 ) : (
+                   <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 w-full">
+                     <div className="space-y-6">
+                       <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 backdrop-blur-sm">
+                         <h3 className="text-white font-bold mb-4 border-b border-white/5 pb-2">Importação de Template (.bbmodel / .nbt)</h3>
+                         <div 
+                           className="w-full aspect-video bg-black/40 border-2 border-dashed border-white/10 rounded-xl flex items-center justify-center flex-col text-white/30 cursor-pointer hover:border-amber-500/50 hover:bg-amber-500/5 transition-colors group"
+                           onDragOver={(e) => { e.preventDefault(); }}
+                           onDrop={handleStructureDrop}
+                         >
+                           <Box size={48} className="mb-2 group-hover:text-amber-500 transition-colors" />
+                           <span className="text-xs group-hover:text-amber-200 transition-colors">Arraste o arquivo template aqui</span>
+                         </div>
+                       </div>
+         
+                       <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 backdrop-blur-sm">
+                         <h3 className="text-white font-bold mb-4 border-b border-white/5 pb-2">Informações da Estrutura</h3>
+                         <div className="space-y-4">
+                           <div>
+                             <label className="block text-xs font-semibold text-white/60 mb-1">Nome</label>
+                             <input 
+                               type="text" 
+                               value={activeStruct.displayName} 
+                               onChange={e => updateActiveStruct({ displayName: e.target.value })} 
+                               className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none" 
+                             />
+                           </div>
+                           <div>
+                             <label className="block text-xs font-semibold text-white/60 mb-1">Registry Name</label>
+                             <input 
+                               type="text" 
+                               value={activeStruct.registryName} 
+                               onChange={e => updateActiveStruct({ registryName: e.target.value })} 
+                               className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none" 
+                             />
+                           </div>
+                           <div>
+                             <label className="block text-xs font-semibold text-white/60 mb-1 flex justify-between">
+                               <span className="flex items-center gap-1">Frequência de Spawn (Weight)</span>
+                               <span className="text-amber-500">{activeStruct.spawnProbability}</span>
+                             </label>
+                             <input 
+                               type="range" min="1" max="100" 
+                               value={activeStruct.spawnProbability} 
+                               onChange={(e) => updateActiveStruct({ spawnProbability: Number(e.target.value) })} 
+                               className="w-full accent-amber-500" title="Quão comum é esta estrutura?" 
+                             />
+                           </div>
+                         </div>
+                       </div>
+                     </div>
+         
+                     <div className="space-y-6">
+                       <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 backdrop-blur-sm">
+                         <h3 className="text-white font-bold mb-4 border-b border-white/5 pb-2 flex items-center gap-2">
+                           <Crosshair size={16} /> Regras de Spawn
+                         </h3>
+                         <div className="space-y-4">
+                           <div>
+                             <label className="block text-xs font-semibold text-white/60 mb-1">Biomas permitidos (IDs separados por vírgula)</label>
+                             <textarea 
+                               value={activeStruct.spawnBiomes.join(', ')} 
+                               onChange={e => updateActiveStruct({ spawnBiomes: e.target.value.split(',').map(s => s.trim()) })} 
+                               className="w-full h-20 bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none custom-scrollbar" 
+                             />
+                           </div>
+                           
+                           <div>
+                             <label className="block text-xs font-semibold text-white/60 mb-1">Profundidade (Elevação Y)</label>
+                             <select 
+                               value={activeStruct.surfaceType}
+                               onChange={e => updateActiveStruct({ surfaceType: e.target.value })}
+                               className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none cursor-pointer"
+                             >
+                               <option value="surface">Superfície (Surface)</option>
+                               <option value="underground">Subterrâneo</option>
+                               <option value="sky">No Céu (Sky)</option>
+                             </select>
+                           </div>
+                         </div>
+                       </div>
+         
+                       <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 backdrop-blur-sm">
+                         <h3 className="text-white font-bold mb-4 border-b border-white/5 pb-2 text-red-400">Criaturas na Estrutura</h3>
+                         <div className="space-y-4">
+                           <div>
+                             <label className="block text-xs font-semibold text-white/60 mb-1">Mobs que geram nela</label>
+                             <textarea 
+                               value={activeStruct.entitySpawns.join(', ')} 
+                               onChange={e => updateActiveStruct({ entitySpawns: e.target.value.split(',').map(s => s.trim()) })} 
+                               placeholder="Ex: minecraft:zombie, mymod:boss_vampire"
+                               className="w-full h-20 bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none custom-scrollbar" 
+                             />
+                           </div>
+                         </div>
+                       </div>
+                     </div>
+                   </div>
+                 )}
+              </div>
             )}
 
             {activeTab === 'events' && (
@@ -378,7 +411,7 @@ export const WorldEditor = ({ setActiveView }: { setActiveView?: (view: string) 
                         <option value="SleepFinishedTimeEvent">Ao Acordar (TimeChange)</option>
                         <option value="CustomNodeLogic">Apenas Ativado por Nodos</option>
                       </select>
-                      <button onClick={() => setActiveView && setActiveView('Lógica (Nodos)')} className="w-full bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-500/30 text-indigo-200 p-2 text-sm font-bold rounded flex items-center justify-center gap-2 transition-all cursor-pointer">
+                      <button onClick={() => { store.setActiveView('Lógica (Nodos)'); }} className="w-full bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-500/30 text-indigo-200 p-2 text-sm font-bold rounded flex items-center justify-center gap-2 transition-all cursor-pointer">
                          <Sparkles size={16} /> Abrir Lógica Avançada p/ este Evento
                       </button>
                     </div>

@@ -14,6 +14,8 @@ export const Sidebar = ({ projectSettings, activeView, setActiveView }: SidebarP
     { name: 'Itens', icon: Sword },
     { name: 'Projéteis', icon: Crosshair },
     { name: 'Entidades', icon: Users },
+    { name: 'Estruturas', icon: Cuboid },
+    { name: 'Loots', icon: Package },
     { name: 'Mundo', icon: Globe },
     { name: 'Encantamentos', icon: Wand2 },
     { name: 'Efeitos', icon: Sparkles },

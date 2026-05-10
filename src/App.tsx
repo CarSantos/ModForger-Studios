@@ -4,6 +4,7 @@ import { TopBar } from './components/ide/TopBar';
 import { BlockEditor } from './components/ide/BlockEditor';
 import { ItemEditor } from './components/ide/ItemEditor';
 import { EntityEditor } from './components/ide/EntityEditor';
+import { LootEditor } from './components/ide/LootEditor';
 import { WorldEditor } from './components/ide/WorldEditor';
 import { RecipeEditor } from './components/ide/RecipeEditor';
 import { CustomSystemsEditor } from './components/ide/CustomSystemsEditor';
@@ -16,10 +17,12 @@ import { ProjectileEditor } from './components/ide/ProjectileEditor';
 import { EnchantmentEditor } from './components/ide/EnchantmentEditor';
 import { EffectEditor } from './components/ide/EffectEditor';
 import { Launcher, ProjectSettings } from './components/ide/Launcher';
+import { useModStore } from './store/modStore';
 
 export default function App() {
   const [projectSettings, setProjectSettings] = useState<ProjectSettings | null>(null);
-  const [activeView, setActiveView] = useState('Dashboard');
+  const activeView = useModStore(state => state.activeView);
+  const setActiveView = useModStore(state => state.setActiveView);
 
   if (!projectSettings) {
     return <Launcher onStartProject={setProjectSettings} />;
@@ -32,10 +35,11 @@ export default function App() {
         <TopBar projectSettings={projectSettings} />
         {activeView === 'Dashboard' && <DashboardView projectSettings={projectSettings} setProjectSettings={setProjectSettings} />}
         {activeView === 'Blocos' && <BlockEditor setActiveView={setActiveView} />}
-        {activeView === 'Itens' && <ItemEditor setActiveView={setActiveView} />}
+        {activeView === 'Itens' && <ItemEditor />}
         {activeView === 'Projéteis' && <ProjectileEditor />}
         {activeView === 'Entidades' && <EntityEditor setActiveView={setActiveView} />}
-        {activeView === 'Mundo' && <WorldEditor setActiveView={setActiveView} />}
+        {activeView === 'Loots' && <LootEditor />}
+        {activeView === 'Mundo' && <WorldEditor />}
         {activeView === 'Encantamentos' && <EnchantmentEditor setActiveView={setActiveView} />}
         {activeView === 'Efeitos' && <EffectEditor setActiveView={setActiveView} />}
         {activeView === 'Modelos' && <ModelEditor />}

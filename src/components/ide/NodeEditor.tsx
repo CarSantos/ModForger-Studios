@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, DragEvent } from 'react';
+import React, { useState, useCallback, useRef, DragEvent, useEffect } from 'react';
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -18,7 +18,8 @@ import {
 import '@xyflow/react/dist/style.css';
 import { CustomNode } from './nodes/CustomNode';
 import { Code, Sparkles, Box, Search, ChevronDown, ChevronRight, Plus } from 'lucide-react';
-import { generateModFromPrompt } from '../../services/aiService';
+import { ForgeInput } from './ForgeInput';
+import { useModStore } from '../../store/modStore';
 
 const initialNodes: Node[] = [
   {
@@ -83,10 +84,38 @@ const NODE_PALETTE = [
 
 function DnDFlow() {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const logicGraphs = useModStore(state => state.logicGraphs);
+  const activeId = useModStore(state => state.activeElementId) || 'global';
+  const setLogicGraph = useModStore(state => state.setLogicGraph);
+  const savedGraph = logicGraphs[activeId];
+
+  const [nodes, setNodes, onNodesChange] = useNodesState(savedGraph ? savedGraph.nodes as any[] : initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(savedGraph ? savedGraph.edges as any[] : []);
   const { screenToFlowPosition } = useReactFlow();
   
+  // Save graph when changed safely
+  useEffect(() => {
+     if (activeId !== 'global') {
+        setLogicGraph(activeId, {
+           id: activeId,
+           nodes: nodes as any[],
+           edges: edges as any[]
+        });
+     }
+  }, [nodes, edges, activeId, setLogicGraph]);
+
+  // Load graph when activeId changes
+  useEffect(() => {
+     const graph = logicGraphs[activeId];
+     if (graph) {
+        setNodes(graph.nodes as any[]);
+        setEdges(graph.edges as any[]);
+     } else {
+        setNodes(initialNodes);
+        setEdges([]);
+     }
+  }, [activeId]);
+
   const [compiledCode, setCompiledCode] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
@@ -130,32 +159,8 @@ function DnDFlow() {
     event.dataTransfer.dropEffect = 'move';
   }, []);
 
-  const handleAIGenerate = useCallback(async (nodeId: string, prompt: string) => {
-    // Generate nodes based on the text prompt via IR
-    const result = await generateModFromPrompt(prompt);
-    
-    if (result.logic) {
-      const { nodes: irNodes, edges: irEdges } = result.logic;
-
-      const newNodes: Node[] = irNodes.map(irn => ({
-        id: irn.id,
-        type: irn.type,
-        position: irn.position,
-        data: { label: irn.label, category: irn.category, ...irn.data }
-      }));
-
-      const newEdges: Edge[] = irEdges.map(ire => ({
-        id: ire.id,
-        source: ire.source,
-        target: ire.target,
-        sourceHandle: ire.sourceHandle,
-        targetHandle: ire.targetHandle,
-        animated: true,
-        style: { stroke: '#EC4899', strokeWidth: 2 }
-      }));
-
+  const handleAIGenerated = useCallback((newNodes: any[], newEdges: any[], prompt: string) => {
       setNodes((nds) => {
-        // Salvar nodo gerado por IA na palette
         setAiCustomNodes(prev => [...prev, {
            type: 'ai',
            label: prompt.slice(0, 20) + (prompt.length > 20 ? '...' : ''),
@@ -165,11 +170,23 @@ function DnDFlow() {
            edges: newEdges
         }]);
 
-        return nds.concat(newNodes);
+        return nds.concat(newNodes.map(irn => ({
+          id: irn.id,
+          type: irn.type,
+          position: irn.position,
+          data: { label: irn.label, category: irn.category, ...irn.data }
+        })));
       });
 
-      setEdges(eds => eds.concat(newEdges));
-    }
+      setEdges(eds => eds.concat(newEdges.map(ire => ({
+        id: ire.id,
+        source: ire.source,
+        target: ire.target,
+        sourceHandle: ire.sourceHandle,
+        targetHandle: ire.targetHandle,
+        animated: true,
+        style: { stroke: '#EC4899', strokeWidth: 2 }
+      }))));
   }, [setNodes, setEdges]);
 
   const onDrop = useCallback(
@@ -226,8 +243,7 @@ function DnDFlow() {
         position,
         data: { 
            label, 
-           category: type,
-           ...(type === 'ai' ? { onGenerate: handleAIGenerate } : {})
+           category: type
         },
       };
 
@@ -237,7 +253,7 @@ function DnDFlow() {
         return newNodes;
       });
     },
-    [screenToFlowPosition, setNodes, edges, handleAIGenerate],
+    [screenToFlowPosition, setNodes, edges],
   );
   
   // AI Suggestion simulation feature
@@ -571,7 +587,7 @@ function DnDFlow() {
               className="bg-[#0A0A0C]"
               colorMode="dark"
             >
-              <Background color="#fff" gap={16} opacity={0.05} />
+              <Background color="#fff" gap={16} />
               <Controls className="bg-[#1C1C21] border-white/10 fill-white" />
               <MiniMap 
                  nodeColor={(node) => {
@@ -596,22 +612,7 @@ function DnDFlow() {
             </ReactFlow>
             
             {/* IA Input Panel (Bottom Center) */}
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[500px] flex gap-2 z-10 shadow-2xl">
-               <input 
-                 type="text" 
-                 placeholder="Descreve a lógica à IA... (ex: 'Espada de gelo que congela inimigo ao bater')" 
-                 className="flex-1 bg-[#1C1C21]/90 backdrop-blur border border-purple-500/30 rounded-xl px-4 py-3 text-sm text-white/90 placeholder:text-white/40 focus:outline-none focus:border-purple-500/60 shadow-[0_0_15px_rgba(168,85,247,0.1)] focus:shadow-[0_0_20px_rgba(168,85,247,0.2)] transition-shadow"
-                 onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                       handleAIGenerate('ai_gen', e.currentTarget.value);
-                       e.currentTarget.value = '';
-                    }
-                 }}
-               />
-               <button className="bg-purple-600 hover:bg-purple-500 text-white p-3 rounded-xl shadow-lg flex items-center justify-center transition-colors">
-                  <Sparkles size={18} />
-               </button>
-            </div>
+            <ForgeInput onGenerated={handleAIGenerated} />
 
             {/* Top Right Controls */}
             <div className="absolute top-4 right-4 flex gap-2 z-10">
@@ -628,7 +629,7 @@ function DnDFlow() {
                     <Sparkles size={16} className="text-purple-400" />
                     Ferramentas de Nodo
                   </h4>
-                  <p className="text-[10px] text-white/50 mt-1 truncate">{selectedNode.data?.label || 'Nodo selecionado'}</p>
+                  <p className="text-[10px] text-white/50 mt-1 truncate">{(selectedNode.data?.label as string) || 'Nodo selecionado'}</p>
                 </div>
                 <div className="p-2 space-y-1">
                    <button 

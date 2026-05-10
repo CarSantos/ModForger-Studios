@@ -1,13 +1,15 @@
 import { Dispatch, SetStateAction, useState, useEffect } from 'react';
 import { ProjectSettings } from './Launcher';
-import { Image as ImageIcon, Box, Trash2, Plus, Search, Download, Check } from 'lucide-react';
+import { Image as ImageIcon, Box, Trash2, Plus, Search, Download, Check, Type } from 'lucide-react';
+import { useModStore } from '../../store/modStore';
 
 interface DashboardProps {
   projectSettings: ProjectSettings;
   setProjectSettings: Dispatch<SetStateAction<ProjectSettings | null>>;
+  setActiveView: (view: string) => void;
 }
 
-export const DashboardView = ({ projectSettings, setProjectSettings }: DashboardProps) => {
+export const DashboardView = ({ projectSettings, setProjectSettings, setActiveView }: DashboardProps) => {
   const [modVersion, setModVersion] = useState('1.0.0');
   const [modName, setModName] = useState(projectSettings.name);
   const [mcVersion, setMcVersion] = useState(projectSettings.version);
@@ -17,15 +19,15 @@ export const DashboardView = ({ projectSettings, setProjectSettings }: Dashboard
   const [isSearching, setIsSearching] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
 
+  const store = useModStore();
+
   const handleSave = () => {
     setSaveStatus('saving');
-    // Simulate save delay
     setTimeout(() => {
       setProjectSettings(prev => prev ? {
         ...prev,
         name: modName,
         version: mcVersion,
-        // modVersion is not in ProjectSettings type currently, but we'd save it if it was
       } : null);
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 2000);
@@ -49,12 +51,11 @@ export const DashboardView = ({ projectSettings, setProjectSettings }: Dashboard
   const addDependency = (modInfo: any) => {
     setProjectSettings(prev => {
       if (!prev) return prev;
-      // Convert to dummy jar name
       const fileName = `${modInfo.slug}-${modInfo.latest_version || 'latest'}.jar`;
       if (prev.dependencies.some(d => d.name === fileName)) return prev;
       return {
         ...prev,
-        dependencies: [...prev.dependencies, { name: fileName, size: 1048576 }] // 1MB mock
+        dependencies: [...prev.dependencies, { name: fileName, size: 1048576 }]
       };
     });
   };
@@ -74,6 +75,11 @@ export const DashboardView = ({ projectSettings, setProjectSettings }: Dashboard
     '1.20.1', '1.20', '1.19.4', '1.19.3', '1.19.2', '1.19.1', '1.19', 
     '1.18.2'
   ];
+
+  const handleOpenElement = (id: string, type: 'item' | 'block' | 'entity' | 'structure' | 'loot', viewName: string) => {
+    store.openElement(id, type);
+    setActiveView(viewName);
+  };
 
   return (
     <div className="flex-1 p-8 overflow-y-auto bg-[radial-gradient(circle_at_top_right,_#1a1510_0%,_#0A0A0C_60%)] relative">
@@ -227,22 +233,64 @@ export const DashboardView = ({ projectSettings, setProjectSettings }: Dashboard
           </div>
           
           <div className="grid grid-cols-4 gap-4">
-            {/* Mock Items */}
-            {[
-              { type: 'Criaturas', name: 'Goblin', color: 'bg-red-500' },
-              { type: 'Itens', name: 'Espada de Gelo', color: 'bg-cyan-500' },
-              { type: 'Blocos', name: 'Minério de Mithril', color: 'bg-emerald-500' },
-              { type: 'Biomas', name: 'Floresta Sombria', color: 'bg-green-600' },
-              { type: 'Lógica (Nodos)', name: 'Evento: Ao Entrar no Bioma', color: 'bg-purple-500' },
-            ].map((item, idx) => (
-              <div key={idx} className="bg-black/40 border border-white/10 hover:border-white/20 rounded-xl p-4 cursor-pointer transition-colors group">
-                <div className="flex justify-between items-start mb-3">
-                  <div className={`w-8 h-8 rounded-lg ${item.color}/20 text-${item.color} flex items-center justify-center border border-${item.color}/30`}>
-                     <Box size={16} className={`text-${item.color.replace('bg-', '')}`} />
+            {store.items.map((item, idx) => (
+              <div 
+                key={idx} 
+                className="bg-black/40 border border-white/10 hover:border-white/20 rounded-xl p-4 cursor-pointer transition-colors group"
+                onClick={() => handleOpenElement(item.id, 'item', 'Itens')}
+              >
+                 <div className="flex justify-between items-start mb-3">
+                  <div className={`w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-500 flex items-center justify-center border border-cyan-500/30`}>
+                     <Box size={16} />
                   </div>
                 </div>
-                <h4 className="text-sm font-bold text-white group-hover:text-amber-400 transition-colors">{item.name}</h4>
-                <div className="text-[10px] uppercase font-bold tracking-wider text-white/40 mt-1">{item.type}</div>
+                <h4 className="text-sm font-bold text-white group-hover:text-amber-400 transition-colors truncate">{item.displayName}</h4>
+                <div className="text-[10px] uppercase font-bold tracking-wider text-white/40 mt-1">Item</div>
+              </div>
+            ))}
+            {store.blocks.map((block, idx) => (
+              <div 
+                key={`block-${idx}`} 
+                className="bg-black/40 border border-white/10 hover:border-white/20 rounded-xl p-4 cursor-pointer transition-colors group"
+                onClick={() => handleOpenElement(block.id, 'block', 'Blocos')}
+              >
+                <div className="flex justify-between items-start mb-3">
+                  <div className={`w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-500 flex items-center justify-center border border-emerald-500/30`}>
+                     <Box size={16} />
+                  </div>
+                </div>
+                <h4 className="text-sm font-bold text-white group-hover:text-amber-400 transition-colors truncate">{block.displayName}</h4>
+                <div className="text-[10px] uppercase font-bold tracking-wider text-white/40 mt-1">Bloco</div>
+              </div>
+            ))}
+            {store.structures.map((struct, idx) => (
+              <div 
+                key={`struct-${idx}`} 
+                className="bg-black/40 border border-white/10 hover:border-white/20 rounded-xl p-4 cursor-pointer transition-colors group"
+                onClick={() => handleOpenElement(struct.id, 'structure', 'Estruturas')}
+              >
+                <div className="flex justify-between items-start mb-3">
+                  <div className={`w-8 h-8 rounded-lg bg-amber-500/20 text-amber-500 flex items-center justify-center border border-amber-500/30`}>
+                     <Box size={16} />
+                  </div>
+                </div>
+                <h4 className="text-sm font-bold text-white group-hover:text-amber-400 transition-colors truncate">{struct.displayName}</h4>
+                <div className="text-[10px] uppercase font-bold tracking-wider text-white/40 mt-1">Estrutura</div>
+              </div>
+            ))}
+            {store.lootTables.map((loot, idx) => (
+              <div 
+                key={`loot-${idx}`} 
+                className="bg-black/40 border border-white/10 hover:border-white/20 rounded-xl p-4 cursor-pointer transition-colors group"
+                onClick={() => handleOpenElement(loot.id, 'loot', 'Loots')}
+              >
+                <div className="flex justify-between items-start mb-3">
+                  <div className={`w-8 h-8 rounded-lg bg-yellow-400/20 text-yellow-400 flex items-center justify-center border border-yellow-400/30`}>
+                     <Box size={16} />
+                  </div>
+                </div>
+                <h4 className="text-sm font-bold text-white group-hover:text-amber-400 transition-colors truncate">{loot.registryName}</h4>
+                <div className="text-[10px] uppercase font-bold tracking-wider text-white/40 mt-1">Loot Table</div>
               </div>
             ))}
           </div>

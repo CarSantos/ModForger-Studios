@@ -3,7 +3,7 @@ import { Play, HelpCircle, Zap, Database, Repeat, Calculator, Bot, Globe } from 
 import { useState } from 'react';
 
 export function CustomNode({ id, data, isConnectable }: NodeProps) {
-  const { label, category, prompt, onGenerate } = data as { label: string, category: 'event' | 'condition' | 'action' | 'variable' | 'control' | 'data_math' | 'ai' | 'api', prompt?: string, onGenerate?: (id: string, p: string) => void };
+  const { label, category, prompt, onGenerate, itemData } = data as { label: string, category: string, prompt?: string, onGenerate?: (id: string, p: string) => void, itemData?: any };
   const [localPrompt, setLocalPrompt] = useState(prompt || '');
   const { setNodes } = useReactFlow();
   
@@ -81,20 +81,37 @@ export function CustomNode({ id, data, isConnectable }: NodeProps) {
         )}
         
         {/* NEW: Minecraft Item display */}
-        {category === 'item' && data.itemData && (
+        {category === 'item' && itemData && (
           <div className="mt-2 pt-2 border-t border-white/10 text-left text-[10px] space-y-1">
-            <div className="text-white/60">ID: <span className="text-amber-400 font-mono">{data.itemData.registryName}</span></div>
-            <div className="text-white/60">Tipo: <span className="text-white font-mono">{data.itemData.type}</span></div>
+            <div className="text-white/60">ID: <span className="text-amber-400 font-mono">{itemData.registryName}</span></div>
+            <div className="text-white/60">Tipo: <span className="text-white font-mono">{itemData.type}</span></div>
           </div>
         )}
 
         {category === 'data_math' && label === 'Número Específico' && (
-           <input type="number" defaultValue="0" className="w-full bg-black/40 border border-blue-500/50 rounded p-1 text-xs text-white focus:outline-none nodrag mt-2" />
+           <input 
+              type="number" 
+              value={data.value || 0}
+              onChange={e => setNodes(nds => nds.map(n => n.id === id ? { ...n, data: { ...n.data, value: Number(e.target.value) } } : n))}
+              className="w-full bg-black/40 border border-blue-500/50 rounded p-1 text-xs text-white focus:outline-none nodrag mt-2" 
+           />
         )}
         {category === 'data_math' && label === 'Número Aleatório' && (
            <div className="flex gap-1 mt-2">
-             <input type="number" placeholder="Min" defaultValue="0" className="w-1/2 bg-black/40 border border-blue-500/50 rounded p-1 text-xs text-white focus:outline-none nodrag" />
-             <input type="number" placeholder="Max" defaultValue="10" className="w-1/2 bg-black/40 border border-blue-500/50 rounded p-1 text-xs text-white focus:outline-none nodrag" />
+             <input 
+                type="number" 
+                placeholder="Min" 
+                value={data.min || 0}
+                onChange={e => setNodes(nds => nds.map(n => n.id === id ? { ...n, data: { ...n.data, min: Number(e.target.value) } } : n))}
+                className="w-1/2 bg-black/40 border border-blue-500/50 rounded p-1 text-xs text-white focus:outline-none nodrag" 
+             />
+             <input 
+                type="number" 
+                placeholder="Max" 
+                value={data.max || 10}
+                onChange={e => setNodes(nds => nds.map(n => n.id === id ? { ...n, data: { ...n.data, max: Number(e.target.value) } } : n))}
+                className="w-1/2 bg-black/40 border border-blue-500/50 rounded p-1 text-xs text-white focus:outline-none nodrag" 
+             />
            </div>
         )}
       </div>

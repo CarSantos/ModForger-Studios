@@ -5,6 +5,8 @@ export interface ModIR {
   items: ItemIR[];
   blocks: BlockIR[];
   entities: EntityIR[];
+  structures: StructureIR[];
+  lootTables: LootTableIR[];
   logicNodes: LogicGraphIR[];
 }
 
@@ -31,6 +33,30 @@ export interface EntityIR {
   type: 'hostile' | 'passive';
   health: number;
   damage: number;
+}
+
+export interface StructureIR {
+  id: string;
+  registryName: string;
+  displayName: string;
+  spawnBiomes: string[];
+  surfaceType: string;
+  spawnProbability: number;
+  entitySpawns: string[];
+}
+
+export interface LootTableIR {
+  id: string;
+  registryName: string;
+  pools: LootPoolIR[];
+}
+
+export interface LootPoolIR {
+  id: string;
+  item: string;
+  minQuantity: number;
+  maxQuantity: number;
+  chance: number; // 0-100
 }
 
 export interface LogicGraphIR {
