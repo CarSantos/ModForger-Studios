@@ -14,7 +14,7 @@ export interface ItemIR {
   id: string;
   registryName: string;
   displayName: string;
-  type: 'sword' | 'pickaxe' | 'axe' | 'shovel' | 'hoe' | 'shield' | 'armor' | 'food' | 'material' | 'ranged';
+  type: 'sword' | 'pickaxe' | 'axe' | 'shovel' | 'hoe' | 'shield' | 'armor' | 'food' | 'material' | 'ranged' | 'bow';
   maxStackSize: number;
   logicGraphId?: string; // Reference to a logic graph to execute on use
 }
@@ -40,6 +40,19 @@ export interface EntityIR {
   type: 'hostile' | 'passive';
   health: number;
   damage: number;
+}
+
+export interface RecipeIR {
+  id: string;
+  registryName: string;
+  displayName: string;
+  type: 'crafting_shaped' | 'crafting_shapeless' | 'smelting' | 'blasting';
+  resultItem: string;
+  resultCount: number;
+  // Shaped: 3x3 array of item IDs, Shapeless: array of item IDs, Smelting/Blasting: single item ID
+  ingredients: (string | null)[]; 
+  experience?: number;
+  cookingTime?: number;
 }
 
 export interface StructureIR {

@@ -44,7 +44,7 @@ export default function App() {
         {activeView === 'Efeitos' && <EffectEditor setActiveView={setActiveView} />}
         {activeView === 'Modelos' && <ModelEditor />}
         {activeView === 'Texturas' && <TextureEditor />}
-        {activeView === 'Receitas' && <RecipeEditor />}
+        {activeView === 'Receitas' && <RecipeEditor setActiveView={setActiveView} />}
         {activeView === 'Lógica (Nodos)' && <NodeEditor />}
         {activeView === 'Sistemas Custom' && <CustomSystemsEditor setActiveView={setActiveView} />}
         {activeView === 'Configurações do Projeto' && <SettingsEditor projectSettings={projectSettings} setProjectSettings={setProjectSettings} />}

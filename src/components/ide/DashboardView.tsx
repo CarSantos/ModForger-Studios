@@ -76,7 +76,7 @@ export const DashboardView = ({ projectSettings, setProjectSettings, setActiveVi
     '1.18.2'
   ];
 
-  const handleOpenElement = (id: string, type: 'item' | 'block' | 'entity' | 'structure' | 'loot', viewName: string) => {
+  const handleOpenElement = (id: string, type: 'item' | 'block' | 'entity' | 'structure' | 'loot' | 'recipe', viewName: string) => {
     store.openElement(id, type);
     setActiveView(viewName);
   };
@@ -255,6 +255,26 @@ export const DashboardView = ({ projectSettings, setProjectSettings, setActiveVi
                 </div>
                 <h4 className="text-sm font-bold text-white group-hover:text-amber-400 transition-colors truncate pr-6">{struct.displayName}</h4>
                 <div className="text-[10px] uppercase font-bold tracking-wider text-white/40 mt-1">Estrutura</div>
+              </div>
+            ))}
+            {store.recipes?.map((recipe, idx) => (
+              <div 
+                key={`recipe-${idx}`} 
+                className="bg-black/40 border border-white/10 hover:border-amber-500/30 rounded-xl p-4 cursor-pointer transition-colors group relative"
+                onClick={() => handleOpenElement(recipe.id, 'recipe' as any, 'Receitas')}
+              >
+                 <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="bg-amber-500/10 text-amber-500 p-1.5 rounded-lg border border-amber-500/20">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                    </div>
+                 </div>
+                <div className="flex justify-between items-start mb-3">
+                  <div className={`w-8 h-8 rounded-lg bg-pink-500/20 text-pink-500 flex items-center justify-center border border-pink-500/30`}>
+                     <Box size={16} />
+                  </div>
+                </div>
+                <h4 className="text-sm font-bold text-white group-hover:text-amber-400 transition-colors truncate pr-6">{recipe.displayName}</h4>
+                <div className="text-[10px] uppercase font-bold tracking-wider text-white/40 mt-1">Receita</div>
               </div>
             ))}
             {store.lootTables.map((loot, idx) => (

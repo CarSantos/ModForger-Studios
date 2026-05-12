@@ -561,12 +561,12 @@ function DnDFlow() {
       </div>
 
       {/* Editor Canvas Area */}
-      <div className="flex-1 border-l border-white/5 relative overflow-hidden h-full flex flex-col" ref={reactFlowWrapper}>
+      <div className="flex-1 border-l border-white/5 relative overflow-hidden h-full w-full" ref={reactFlowWrapper}>
         {ejectedToScript ? (
           <div className="w-full h-full bg-[#1e1e1e] flex flex-col relative">
             <div className="bg-[#2d2d2d] p-3 border-b border-black/50 flex justify-between items-center">
               <span className="text-white/80 font-mono text-sm">ModForgerScript.ts</span>
-              <button onClick={() => setEjectedToScript(false)} className="text-xs bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 px-3 py-1.5 rounded transition-colors">
+              <button onClick={() => setEjectedToScript(false)} className="text-xs bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 px-3 py-1.5 rounded transition-colors cursor-pointer">
                 Voltar a Nodos Visuais (Pode perder alterações)
               </button>
             </div>
@@ -578,7 +578,7 @@ function DnDFlow() {
             />
           </div>
         ) : (
-          <>
+          <div className="absolute inset-0 w-full h-full">
             <ReactFlow
               nodes={nodes}
               edges={edges}
@@ -591,8 +591,10 @@ function DnDFlow() {
               onDragOver={onDragOver}
               nodeTypes={nodeTypes}
               fitView
+              fitViewOptions={{ padding: 0.2, includeHiddenNodes: true }}
               className="bg-[#0A0A0C]"
               colorMode="dark"
+              style={{ width: '100%', height: '100%' }}
             >
               <Background color="#fff" gap={16} />
               <Controls className="bg-[#1C1C21] border-white/10 fill-white" />
@@ -692,7 +694,7 @@ function DnDFlow() {
                 </pre>
               </div>
             </div>
-          </>
+          </div>
         )}
       </div>
     </div>

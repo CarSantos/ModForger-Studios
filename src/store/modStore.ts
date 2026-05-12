@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { ItemIR, BlockIR, EntityIR, StructureIR, LootTableIR, LogicGraphIR } from '../types/ir';
+import { ItemIR, BlockIR, EntityIR, StructureIR, LootTableIR, LogicGraphIR, RecipeIR } from '../types/ir';
 
 interface ModState {
   items: ItemIR[];
@@ -8,9 +8,10 @@ interface ModState {
   entities: EntityIR[];
   structures: StructureIR[];
   lootTables: LootTableIR[];
+  recipes: RecipeIR[];
   logicGraphs: Record<string, LogicGraphIR>; // Maps an element ID to its logic graph
   activeElementId: string | null;
-  activeElementType: 'item' | 'block' | 'entity' | 'structure' | 'loot' | null;
+  activeElementType: 'item' | 'block' | 'entity' | 'structure' | 'loot' | 'recipe' | null;
   activeLogicGraphId: string | null;
   activeView: string;
 
@@ -34,11 +35,15 @@ interface ModState {
   updateLoot: (id: string, updates: Partial<LootTableIR>) => void;
   deleteLootTable: (id: string) => void;
 
-  updateElement: (id: string, type: 'item' | 'block' | 'entity' | 'structure' | 'loot', updates: any) => void;
-  deleteElement: (id: string, type: 'item' | 'block' | 'entity' | 'structure' | 'loot') => void;
+  addRecipe: (recipe: RecipeIR) => void;
+  updateRecipe: (id: string, updates: Partial<RecipeIR>) => void;
+  deleteRecipe: (id: string) => void;
+
+  updateElement: (id: string, type: 'item' | 'block' | 'entity' | 'structure' | 'loot' | 'recipe', updates: any) => void;
+  deleteElement: (id: string, type: 'item' | 'block' | 'entity' | 'structure' | 'loot' | 'recipe') => void;
 
   setLogicGraph: (elementId: string, graph: LogicGraphIR) => void;
-  openElement: (id: string, type: 'item' | 'block' | 'entity' | 'structure' | 'loot') => void;
+  openElement: (id: string, type: 'item' | 'block' | 'entity' | 'structure' | 'loot' | 'recipe') => void;
   closeElement: () => void;
 }
 
@@ -59,6 +64,7 @@ export const useModStore = create<ModState>()(
       entities: [],
       structures: [],
       lootTables: [],
+      recipes: [],
       logicGraphs: {},
       activeElementId: null,
       activeElementType: null,
@@ -93,18 +99,26 @@ export const useModStore = create<ModState>()(
       })),
       deleteLootTable: (id) => set((state) => ({ lootTables: state.lootTables.filter(lt => lt.id !== id) })),
 
+      addRecipe: (recipe) => set((state) => ({ recipes: [...state.recipes, recipe] })),
+      updateRecipe: (id, updates) => set((state) => ({
+          recipes: state.recipes.map(r => r.id === id ? { ...r, ...updates } : r)
+      })),
+      deleteRecipe: (id) => set((state) => ({ recipes: state.recipes.filter(r => r.id !== id) })),
+
       updateElement: (id, type, updates) => set((state) => {
         let items = state.items;
         let blocks = state.blocks;
         let structures = state.structures;
         let lootTables = state.lootTables;
+        let recipes = state.recipes;
         
         if (type === 'item') items = items.map(i => i.id === id ? { ...i, ...updates } : i);
         if (type === 'block') blocks = blocks.map(b => b.id === id ? { ...b, ...updates } : b);
         if (type === 'structure') structures = structures.map(s => s.id === id ? { ...s, ...updates } : s);
         if (type === 'loot') lootTables = lootTables.map(l => l.id === id ? { ...l, ...updates } : l);
+        if (type === 'recipe') recipes = recipes.map(r => r.id === id ? { ...r, ...updates } : r);
         
-        return { items, blocks, structures, lootTables };
+        return { items, blocks, structures, lootTables, recipes };
       }),
 
       deleteElement: (id, type) => set((state) => {
@@ -112,13 +126,15 @@ export const useModStore = create<ModState>()(
         let blocks = state.blocks;
         let structures = state.structures;
         let lootTables = state.lootTables;
+        let recipes = state.recipes;
         
         if (type === 'item') items = items.filter(i => i.id !== id);
         if (type === 'block') blocks = blocks.filter(b => b.id !== id);
         if (type === 'structure') structures = structures.filter(s => s.id !== id);
         if (type === 'loot') lootTables = lootTables.filter(l => l.id !== id);
+        if (type === 'recipe') recipes = recipes.filter(r => r.id !== id);
         
-        return { items, blocks, structures, lootTables };
+        return { items, blocks, structures, lootTables, recipes };
       }),
 
       setLogicGraph: (elementId, graph) => set((state) => ({

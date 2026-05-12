@@ -56,6 +56,11 @@ export const WorldEditor = () => {
     store.updateStructure(activeStruct.id, updates);
   };
 
+  const handleStructureNameChange = (name: string) => {
+    if (!activeStruct) return;
+    updateActiveStruct({ displayName: name, registryName: 'mymod:' + generateRegistryName(name) });
+  };
+
   const setDragActive = (active: boolean) => {
      // No op for now, logic rewritten below
   };
@@ -328,11 +333,11 @@ export const WorldEditor = () => {
                          <h3 className="text-white font-bold mb-4 border-b border-white/5 pb-2">Informações da Estrutura</h3>
                          <div className="space-y-4">
                            <div>
-                             <label className="block text-xs font-semibold text-white/60 mb-1">Nome</label>
+                             <label className="block text-xs font-semibold text-white/60 mb-1">Nome Exibido</label>
                              <input 
                                type="text" 
                                value={activeStruct.displayName} 
-                               onChange={e => updateActiveStruct({ displayName: e.target.value })} 
+                               onChange={e => handleStructureNameChange(e.target.value)} 
                                className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none" 
                              />
                            </div>
@@ -342,7 +347,7 @@ export const WorldEditor = () => {
                                type="text" 
                                value={activeStruct.registryName} 
                                onChange={e => updateActiveStruct({ registryName: e.target.value })} 
-                               className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none" 
+                               className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white/50 focus:border-amber-500 outline-none" 
                              />
                            </div>
                            <div>
