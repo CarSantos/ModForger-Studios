@@ -1,7 +1,8 @@
-import { Sword, Shield, Pickaxe, Image as ImageIcon, Box, Zap } from 'lucide-react';
+import { Sword, Shield, Pickaxe, Image as ImageIcon, Box, Zap, Save, Trash2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useModStore } from '../../store/modStore';
 import { ItemIR } from '../../types/ir';
+import { generateRegistryName } from '../../lib/utils';
 
 export const ItemEditor = () => {
   const store = useModStore();
@@ -20,19 +21,43 @@ export const ItemEditor = () => {
 
   const updateItem = (updates: Partial<ItemIR>) => {
     if (!activeItem) return;
-    store.updateItem(activeItem.id, updates);
+    
+    const newUpdates = { ...updates };
+    if (updates.displayName && !updates.registryName) {
+      newUpdates.registryName = 'mymod:' + generateRegistryName(updates.displayName);
+    }
+    
+    store.updateItem(activeItem.id, newUpdates);
   };
 
   const createItem = () => {
     const newItem: ItemIR = {
       id: Math.random().toString(36).substring(2, 9),
-      registryName: 'mymod:custom_item',
+      registryName: 'mymod:novo_item',
       displayName: 'Novo Item',
-      type: 'item',
+      type: 'material',
       maxStackSize: 64
     };
     store.addItem(newItem);
     store.openElement(newItem.id, 'item');
+  };
+
+  const handleSave = () => {
+    if (!activeItem) return;
+    if (!activeItem.displayName || !activeItem.registryName) {
+      alert("O nome e registry name são obrigatórios!");
+      return;
+    }
+    // Simulate save by updating the store (assuming auto-save is already there, but explicit confirm)
+    alert(`Item '${activeItem.displayName}' salvo com sucesso!`);
+  };
+
+  const handleDelete = () => {
+    if (!activeItem) return;
+    if (window.confirm(`Tem a certeza que deseja eliminar o item '${activeItem.displayName}'?`)) {
+      store.deleteItem(activeItem.id);
+      setActiveView('Dashboard');
+    }
   };
 
   if (!activeItem) {
@@ -59,7 +84,7 @@ export const ItemEditor = () => {
 
   return (
     <div className="flex-1 bg-[radial-gradient(circle_at_top_right,_#1a1510_0%,_#0A0A0C_60%)] flex flex-col relative overflow-hidden">
-      <div className="flex-1 p-8 overflow-y-auto">
+      <div className="flex-1 p-8 overflow-y-auto pb-24">
         <div className="max-w-5xl mx-auto space-y-6">
            <header className="mb-4 flex items-end justify-between">
             <div>
@@ -286,6 +311,20 @@ export const ItemEditor = () => {
               </div>
             </div>
           )}
+        </div>
+      </div>
+      {/* Barra de Ações Fixa */}
+      <div className="absolute bottom-0 left-0 right-0 p-4 bg-[#0A0A0C]/90 backdrop-blur-md border-t border-white/10 flex justify-between items-center z-50">
+        <div className="text-xs text-white/50 px-4">
+          Status: <span className="text-emerald-400">Modificações Guardadas (Auto-Save)</span>
+        </div>
+        <div className="flex gap-3 px-4">
+          <button onClick={handleDelete} className="flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-lg font-bold text-sm transition-colors cursor-pointer">
+            <Trash2 size={16} /> Eliminar Item
+          </button>
+          <button onClick={handleSave} className="flex items-center gap-2 px-6 py-2 bg-amber-500 hover:bg-amber-400 text-black rounded-lg font-bold text-sm shadow-[0_0_15px_rgba(245,158,11,0.3)] transition-colors cursor-pointer">
+            <Save size={16} /> Salvar Alterações
+          </button>
         </div>
       </div>
     </div>

@@ -1,8 +1,17 @@
-import { useState } from 'react';
-import { Sparkles, Box, FileCode2, Info, Plus, Trash2, Skull, Heart, Droplets } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Sparkles, Box, FileCode2, Info, Plus, Trash2, Skull, Heart, Droplets, Save } from 'lucide-react';
 import { ThreeDViewer } from './ThreeDViewer';
+import { generateRegistryName } from '../../lib/utils';
 
 export const EntityEditor = ({ setActiveView }: { setActiveView?: (view: string) => void }) => {
+
+  const [displayName, setDisplayName] = useState('Nova Entidade');
+  const [registryName, setRegistryName] = useState('mymod:nova_entidade');
+  
+  const handleNameChange = (name: string) => {
+    setDisplayName(name);
+    setRegistryName('mymod:' + generateRegistryName(name));
+  };
 
   const [entityType, setEntityType] = useState('hostile'); // hostile, passive, neutral, boss
   const [health, setHealth] = useState(20);
@@ -147,13 +156,26 @@ ${drops.length > 0 ? drops.map(d => `    // - ${d.item} (Chance: ${d.chance}%, M
             <div className="lg:col-span-1 space-y-6">
               
               <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 backdrop-blur-sm relative overflow-hidden">
-                 <h3 className="text-white font-bold mb-4 border-b border-white/5 pb-2">Tipo de Entidade</h3>
-                 <select value={entityType} onChange={e => setEntityType(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none cursor-pointer">
-                    <option value="hostile">Hostil (Monstro)</option>
-                    <option value="passive">Pacífica (Animal base)</option>
-                    <option value="neutral">Neutra (Ataca se atacada)</option>
-                    <option value="boss">Boss (Barra de vida visível)</option>
-                 </select>
+                 <h3 className="text-white font-bold mb-4 border-b border-white/5 pb-2">Identificação & Tipo</h3>
+                 <div className="space-y-4">
+                   <div>
+                     <label className="block text-xs font-semibold text-white/60 mb-1">Nome Exibido</label>
+                     <input type="text" value={displayName} onChange={e => handleNameChange(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none transition-all" />
+                   </div>
+                   <div>
+                     <label className="block text-xs font-semibold text-white/60 mb-1">Registry Name</label>
+                     <input type="text" value={registryName} onChange={e => setRegistryName(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white/50 focus:border-amber-500 outline-none transition-all" />
+                   </div>
+                   <div>
+                     <label className="block text-xs font-semibold text-white/60 mb-1 mt-4">Tipo de Entidade</label>
+                     <select value={entityType} onChange={e => setEntityType(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none cursor-pointer">
+                        <option value="hostile">Hostil (Monstro)</option>
+                        <option value="passive">Pacífica (Animal base)</option>
+                        <option value="neutral">Neutra (Ataca se atacada)</option>
+                        <option value="boss">Boss (Barra de vida visível)</option>
+                     </select>
+                   </div>
+                 </div>
               </div>
 
               {/* Atributos Base */}
@@ -450,6 +472,31 @@ ${drops.length > 0 ? drops.map(d => `    // - ${d.item} (Chance: ${d.chance}%, M
 
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Barra de Ações Fixa */}
+      <div className="absolute bottom-0 left-0 right-0 p-4 bg-[#0A0A0C]/90 backdrop-blur-md border-t border-white/10 flex justify-between items-center z-50">
+        <div className="text-xs text-white/50 px-4">
+          Status: <span className="text-emerald-400">Pronto para salvar na Store</span>
+        </div>
+        <div className="flex gap-3 px-4">
+          <button onClick={() => {
+            if (window.confirm(`Tem a certeza que deseja eliminar '${displayName}'?`)) {
+              if (setActiveView) setActiveView('Dashboard');
+            }
+          }} className="flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-lg font-bold text-sm transition-colors cursor-pointer">
+            <Trash2 size={16} /> Eliminar Entidade
+          </button>
+          <button onClick={() => {
+            if (!displayName || !registryName) {
+              alert("O nome e registry name são obrigatórios!");
+              return;
+            }
+            alert(`Entidade '${displayName}' salva com sucesso! (Apenas UI, integração de store em desenvolvimento)`);
+          }} className="flex items-center gap-2 px-6 py-2 bg-amber-500 hover:bg-amber-400 text-black rounded-lg font-bold text-sm shadow-[0_0_15px_rgba(245,158,11,0.3)] transition-colors cursor-pointer">
+            <Save size={16} /> Salvar Alterações
+          </button>
         </div>
       </div>
     </div>

@@ -1,16 +1,22 @@
-import { Package, Trash2, Plus } from 'lucide-react';
+import { Package, Trash2, Plus, Save } from 'lucide-react';
 import { useModStore } from '../../store/modStore';
 import { useState, useEffect } from 'react';
 import { LootTableIR, LootPoolIR } from '../../types/ir';
+import { generateRegistryName } from '../../lib/utils';
 
-export const LootEditor = () => {
+export const LootEditor = ({ setActiveView }: { setActiveView?: (view: string) => void }) => {
   const store = useModStore();
   const [activeLoot, setActiveLoot] = useState<LootTableIR | null>(null);
+
+  // local displayName state for visual parity
+  const [displayName, setDisplayName] = useState('Loot Customizado');
 
   useEffect(() => {
     if (store.activeElementId && store.activeElementType === 'loot') {
       const found = store.lootTables.find(l => l.id === store.activeElementId);
-      if (found) setActiveLoot(found);
+      if (found) {
+        setActiveLoot(found);
+      }
     } else {
       // Pick first one automatically if any
       if (store.lootTables.length > 0) {
@@ -18,6 +24,11 @@ export const LootEditor = () => {
       }
     }
   }, [store.activeElementId, store.activeElementType, store.lootTables]);
+
+  const handleNameChange = (name: string) => {
+    setDisplayName(name);
+    updateActiveLoot({ registryName: 'mymod:' + generateRegistryName(name) });
+  };
 
   const updateActiveLoot = (updates: Partial<LootTableIR>) => {
     if (!activeLoot) return;
@@ -69,7 +80,7 @@ export const LootEditor = () => {
 
   return (
     <div className="flex-1 bg-[radial-gradient(circle_at_top_right,_#1a1510_0%,_#0A0A0C_60%)] flex flex-col relative overflow-hidden">
-      <div className="flex-1 p-8 overflow-y-auto">
+      <div className="flex-1 p-8 overflow-y-auto pb-24">
         <div className="max-w-4xl mx-auto space-y-6">
           <header className="mb-8">
             <h1 className="text-4xl font-extrabold tracking-tighter text-white mb-2 flex items-center gap-3">
@@ -80,15 +91,28 @@ export const LootEditor = () => {
           </header>
 
           <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 backdrop-blur-sm">
-            <h3 className="text-white font-bold mb-4 border-b border-white/5 pb-2">Informações da Loot Table</h3>
-            <div>
-              <label className="block text-xs font-semibold text-white/60 mb-1">Registry Name (Ex: blocks/ruby_ore)</label>
-              <input 
-                 type="text" 
-                 value={activeLoot.registryName} 
-                 onChange={e => updateActiveLoot({ registryName: e.target.value })} 
-                 className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none" 
-              />
+            <h3 className="text-white font-bold mb-4 border-b border-white/5 pb-2">Identificação da Loot Table</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-white/60 mb-1">Nome Exibido</label>
+                <input 
+                   type="text" 
+                   value={displayName} 
+                   onChange={e => handleNameChange(e.target.value)} 
+                   className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none" 
+                   placeholder="Ex: Baú de Ouro"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-white/60 mb-1">Registry Name</label>
+                <input 
+                   type="text" 
+                   value={activeLoot.registryName} 
+                   onChange={e => updateActiveLoot({ registryName: e.target.value })} 
+                   className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white/50 focus:border-amber-500 outline-none" 
+                   placeholder="Ex: mymod:bau_de_ouro"
+                />
+              </div>
             </div>
           </div>
 
@@ -153,6 +177,34 @@ export const LootEditor = () => {
                </div>
             )}
           </div>
+        </div>
+      </div>
+      
+      {/* Barra de Ações Fixa */}
+      <div className="absolute bottom-0 left-0 right-0 p-4 bg-[#0A0A0C]/90 backdrop-blur-md border-t border-white/10 flex justify-between items-center z-50">
+        <div className="text-xs text-white/50 px-4">
+          Status: <span className="text-emerald-400">Pronto para salvar na Store</span>
+        </div>
+        <div className="flex gap-3 px-4">
+          <button onClick={() => {
+            if (activeLoot) {
+              if (window.confirm(`Tem a certeza que deseja eliminar '${displayName}'?`)) {
+                store.deleteElement(activeLoot.id, 'loot');
+                if (setActiveView) setActiveView('Dashboard');
+              }
+            }
+          }} className="flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-lg font-bold text-sm transition-colors cursor-pointer">
+            <Trash2 size={16} /> Eliminar Loot
+          </button>
+          <button onClick={() => {
+            if (!activeLoot?.registryName || !displayName) {
+              alert("O nome e registry name são obrigatórios!");
+              return;
+            }
+            alert(`Loot '${displayName}' salvo com sucesso!`);
+          }} className="flex items-center gap-2 px-6 py-2 bg-amber-500 hover:bg-amber-400 text-black rounded-lg font-bold text-sm shadow-[0_0_15px_rgba(245,158,11,0.3)] transition-colors cursor-pointer">
+            <Save size={16} /> Salvar Alterações
+          </button>
         </div>
       </div>
     </div>

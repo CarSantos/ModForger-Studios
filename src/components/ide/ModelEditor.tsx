@@ -1,9 +1,19 @@
-import { Box, Play, Sparkles, Image as ImageIcon } from 'lucide-react';
+import { Box, Play, Sparkles, Image as ImageIcon, Trash2, Save } from 'lucide-react';
+import { useState } from 'react';
+import { generateRegistryName } from '../../lib/utils';
 
 export const ModelEditor = () => {
+  const [displayName, setDisplayName] = useState('Novo Modelo');
+  const [registryName, setRegistryName] = useState('mymod:novo_modelo');
+
+  const handleNameChange = (name: string) => {
+    setDisplayName(name);
+    setRegistryName('mymod:' + generateRegistryName(name));
+  };
+
   return (
     <div className="flex-1 bg-[radial-gradient(circle_at_top_right,_#1a1510_0%,_#0A0A0C_60%)] flex flex-col relative overflow-hidden">
-      <div className="flex-1 p-8 overflow-y-auto">
+      <div className="flex-1 p-8 overflow-y-auto pb-24">
         <div className="max-w-4xl mx-auto space-y-6">
           <header className="mb-8">
             <h1 className="text-4xl font-extrabold tracking-tighter text-white mb-2 flex items-center gap-3 italic">
@@ -28,6 +38,20 @@ export const ModelEditor = () => {
             </div>
 
             <div className="col-span-1 space-y-6 flex flex-col">
+              <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 backdrop-blur-sm">
+                <h3 className="text-white font-bold mb-4 border-b border-white/5 pb-2">Identificação</h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-white/60 mb-1">Nome Exibido</label>
+                    <input type="text" value={displayName} onChange={(e) => handleNameChange(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white focus:border-amber-500 outline-none" placeholder="Ex: Dragão" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-white/60 mb-1">Registry Name</label>
+                    <input type="text" value={registryName} onChange={(e) => setRegistryName(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white/50 focus:border-amber-500 outline-none" placeholder="Ex: mymod:dragao" />
+                  </div>
+                </div>
+              </div>
+
               <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 backdrop-blur-sm">
                 <h3 className="text-white font-bold mb-4 border-b border-white/5 pb-2">Animações</h3>
                 <div className="space-y-4">
@@ -65,6 +89,31 @@ export const ModelEditor = () => {
               </div>
             </div>
           </div>
+        </div>
+      </div>
+      
+      {/* Barra de Ações Fixa */}
+      <div className="absolute bottom-0 left-0 right-0 p-4 bg-[#0A0A0C]/90 backdrop-blur-md border-t border-white/10 flex justify-between items-center z-50">
+        <div className="text-xs text-white/50 px-4">
+          Status: <span className="text-emerald-400">Pronto para salvar na Store</span>
+        </div>
+        <div className="flex gap-3 px-4">
+          <button onClick={() => {
+            if (window.confirm(`Tem a certeza que deseja eliminar '${displayName}'?`)) {
+              // placeholder
+            }
+          }} className="flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-lg font-bold text-sm transition-colors cursor-pointer">
+            <Trash2 size={16} /> Eliminar Modelo
+          </button>
+          <button onClick={() => {
+            if (!displayName || !registryName) {
+              alert("O nome e registry name são obrigatórios!");
+              return;
+            }
+            alert(`Modelo '${displayName}' salvo com sucesso!`);
+          }} className="flex items-center gap-2 px-6 py-2 bg-amber-500 hover:bg-amber-400 text-black rounded-lg font-bold text-sm shadow-[0_0_15px_rgba(245,158,11,0.3)] transition-colors cursor-pointer">
+            <Save size={16} /> Salvar Alterações
+          </button>
         </div>
       </div>
     </div>

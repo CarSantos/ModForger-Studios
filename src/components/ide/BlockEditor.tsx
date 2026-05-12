@@ -1,7 +1,8 @@
-import { FileCode2, Sparkles, Box, Droplet, Zap, Star, Shield, Image as ImageIcon } from 'lucide-react';
+import { FileCode2, Sparkles, Box, Droplet, Zap, Star, Shield, Image as ImageIcon, Save, Trash2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useModStore } from '../../store/modStore';
 import { BlockIR } from '../../types/ir';
+import { generateRegistryName } from '../../lib/utils';
 
 export const BlockEditor = ({ setActiveView }: { setActiveView?: (view: string) => void }) => {
   const store = useModStore();
@@ -20,13 +21,36 @@ export const BlockEditor = ({ setActiveView }: { setActiveView?: (view: string) 
 
   const updateActiveBlock = (updates: Partial<BlockIR>) => {
     if (!activeBlock) return;
-    store.updateBlock(activeBlock.id, updates);
+    
+    const newUpdates = { ...updates };
+    if (updates.displayName && !updates.registryName) {
+      newUpdates.registryName = 'mymod:' + generateRegistryName(updates.displayName);
+    }
+    
+    store.updateBlock(activeBlock.id, newUpdates);
   };
 
   const addDrop = () => {
     if (!activeBlock) return;
     const currentDrops = activeBlock.drops || [];
     updateActiveBlock({ drops: [...currentDrops, { item: 'minecraft:cobblestone', min: 1, max: 1, chance: 100, condition: 'always' }] });
+  };
+
+  const handleSave = () => {
+    if (!activeBlock) return;
+    if (!activeBlock.displayName || !activeBlock.registryName) {
+      alert("O nome e registry name são obrigatórios!");
+      return;
+    }
+    alert(`Bloco '${activeBlock.displayName}' salvo com sucesso!`);
+  };
+
+  const handleDelete = () => {
+    if (!activeBlock) return;
+    if (window.confirm(`Tem a certeza que deseja eliminar o bloco '${activeBlock.displayName}'?`)) {
+      store.deleteElement(activeBlock.id, 'block');
+      if (setActiveView) setActiveView('Dashboard');
+    }
   };
 
   if (!activeBlock) {
@@ -38,8 +62,8 @@ export const BlockEditor = ({ setActiveView }: { setActiveView?: (view: string) 
           onClick={() => {
             const newBlock: BlockIR = { 
               id: Math.random().toString(36).substr(2, 9), 
-              registryName: 'mymod:custom_block', 
-              displayName: 'Custom Block',
+              registryName: 'mymod:novo_bloco', 
+              displayName: 'Novo Bloco',
               material: 'rock',
               hardness: 3.0,
               drops: []
@@ -47,7 +71,7 @@ export const BlockEditor = ({ setActiveView }: { setActiveView?: (view: string) 
             store.addBlock(newBlock);
             store.openElement(newBlock.id, 'block');
           }}
-          className="bg-amber-500 hover:bg-amber-400 text-black px-4 py-2 rounded-lg font-bold shadow-[0_0_15px_rgba(245,158,11,0.3)] transition-colors"
+          className="bg-amber-500 hover:bg-amber-400 text-black px-4 py-2 rounded-lg font-bold shadow-[0_0_15px_rgba(245,158,11,0.3)] transition-colors cursor-pointer"
         >
           Criar Novo Bloco
         </button>
@@ -59,7 +83,7 @@ export const BlockEditor = ({ setActiveView }: { setActiveView?: (view: string) 
 
   return (
     <div className="flex-1 bg-[radial-gradient(circle_at_top_right,_#1a1510_0%,_#0A0A0C_60%)] flex flex-col relative overflow-hidden">
-      <div className="flex-1 p-8 overflow-y-auto">
+      <div className="flex-1 p-8 overflow-y-auto pb-24">
         <div className="max-w-5xl mx-auto">
           <header className="mb-8">
             <h1 className="text-4xl font-extrabold tracking-tighter text-white mb-2 flex items-center gap-3 italic">
@@ -261,7 +285,7 @@ export const BlockEditor = ({ setActiveView }: { setActiveView?: (view: string) 
       </div>
       
       {/* Bottom Panel */}
-      <div className="h-48 border-t border-white/10 bg-black/40 flex flex-col shrink-0">
+      <div className="h-48 border-t border-white/10 bg-black/40 flex flex-col shrink-0 pb-16">
          {/* Mesma console visual do anterior */}
          <div className="p-4 px-6 font-mono text-[11px] leading-tight text-white/50 overflow-y-auto space-y-1.5 bg-black/40 h-full">
           <div className="flex gap-2 mb-3">
@@ -271,6 +295,21 @@ export const BlockEditor = ({ setActiveView }: { setActiveView?: (view: string) 
             <span className="ml-2 text-[9px] opacity-70 uppercase tracking-widest text-white/40">System Debug Console</span>
           </div>
           <div className="text-emerald-400 italic">[OK] Propriedades do bloco sincronizadas.</div>
+        </div>
+      </div>
+
+      {/* Barra de Ações Fixa */}
+      <div className="absolute bottom-0 left-0 right-0 p-4 bg-[#0A0A0C]/90 backdrop-blur-md border-t border-white/10 flex justify-between items-center z-50">
+        <div className="text-xs text-white/50 px-4">
+          Status: <span className="text-emerald-400">Modificações Guardadas (Auto-Save)</span>
+        </div>
+        <div className="flex gap-3 px-4">
+          <button onClick={handleDelete} className="flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-lg font-bold text-sm transition-colors cursor-pointer">
+            <Trash2 size={16} /> Eliminar Bloco
+          </button>
+          <button onClick={handleSave} className="flex items-center gap-2 px-6 py-2 bg-amber-500 hover:bg-amber-400 text-black rounded-lg font-bold text-sm shadow-[0_0_15px_rgba(245,158,11,0.3)] transition-colors cursor-pointer">
+            <Save size={16} /> Salvar Alterações
+          </button>
         </div>
       </div>
     </div>
