@@ -374,6 +374,32 @@ export const WorldEditor = () => {
                            </div>
                          </div>
                        </div>
+                       <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 backdrop-blur-sm">
+                         <h3 className="text-white font-bold mb-4 border-b border-white/5 pb-2 text-indigo-400">Jigsaw Pools (Geração Dinâmica)</h3>
+                         <div className="space-y-4">
+                           <div className="bg-black/30 p-3 rounded-lg border border-white/5">
+                              <p className="text-xs text-white/60 mb-3 leading-relaxed">
+                                Jigsaw permite que a estrutura se comporte como uma dungeon gerada dinamicamente, onde as peças (pools) se conectam sozinhas (Ex: dracula_castle).
+                              </p>
+                              
+                              <label className="flex items-center gap-2 text-sm text-white/80 cursor-pointer mb-4">
+                               <input type="checkbox" className="accent-amber-500 w-4 h-4 rounded" />
+                               Habilitar Geração por Peças (Jigsaw)
+                              </label>
+
+                              <div className="space-y-2 opacity-50 relative pointer-events-none">
+                                <label className="block text-xs font-semibold text-white/60 mb-1">Pools Target (Nomes Separados por vírgula)</label>
+                                <input type="text" defaultValue="dracula_castle:rooms, dracula_castle:towers" className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white outline-none" />
+                                
+                                <label className="block text-xs font-semibold text-white/60 mb-1 mt-2">Profundidade Máxima (Tamanho do Castelo)</label>
+                                <input type="number" defaultValue={7} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white outline-none" />
+                              </div>
+                              <div className="text-center mt-2">
+                                <button disabled className="text-[10px] uppercase font-bold text-indigo-400/50 bg-indigo-500/10 px-2 py-1 rounded">Editor Jigsaw Completo em Breve</button>
+                              </div>
+                           </div>
+                         </div>
+                       </div>
                      </div>
                    </div>
                  )}

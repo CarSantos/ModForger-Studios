@@ -88,7 +88,7 @@ const NODE_PALETTE = [
 function DnDFlow() {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const logicGraphs = useModStore(state => state.logicGraphs);
-  const activeId = useModStore(state => state.activeElementId) || 'global';
+  const activeId = useModStore(state => state.activeLogicGraphId) || useModStore(state => state.activeElementId) || 'global';
   const setLogicGraph = useModStore(state => state.setLogicGraph);
   const savedGraph = logicGraphs[activeId];
 
