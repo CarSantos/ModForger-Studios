@@ -127,14 +127,21 @@ export const useModStore = create<ModState>()(
         let structures = state.structures;
         let lootTables = state.lootTables;
         let recipes = state.recipes;
+        let entities = state.entities;
         
         if (type === 'item') items = items.filter(i => i.id !== id);
         if (type === 'block') blocks = blocks.filter(b => b.id !== id);
         if (type === 'structure') structures = structures.filter(s => s.id !== id);
         if (type === 'loot') lootTables = lootTables.filter(l => l.id !== id);
         if (type === 'recipe') recipes = recipes.filter(r => r.id !== id);
+        if (type === 'entity') entities = entities.filter(e => e.id !== id);
         
-        return { items, blocks, structures, lootTables, recipes };
+        const isDeletingActive = state.activeElementId === id;
+        
+        return { 
+          items, blocks, structures, lootTables, recipes, entities,
+          ...(isDeletingActive ? { activeElementId: null, activeElementType: null } : {})
+        };
       }),
 
       setLogicGraph: (elementId, graph) => set((state) => ({

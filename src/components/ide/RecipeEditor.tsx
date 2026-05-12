@@ -70,8 +70,46 @@ export const RecipeEditor = ({ setActiveView }: { setActiveView?: (view: string)
 
   return (
     <div className="flex-1 bg-[radial-gradient(circle_at_top_right,_#1a1510_0%,_#0A0A0C_60%)] flex flex-col relative overflow-hidden">
-      <div className="flex-1 p-8 overflow-y-auto pb-24">
+      <div className="flex-1 p-8 overflow-y-auto">
         <div className="max-w-4xl mx-auto space-y-6">
+          <datalist id="available-items">
+            {store.items.map(item => <option key={item.id} value={item.registryName}>{item.displayName}</option>)}
+            {store.blocks.map(block => <option key={block.id} value={block.registryName}>{block.displayName}</option>)}
+            <option value="minecraft:stone">Stone</option>
+            <option value="minecraft:iron_ingot">Iron Ingot</option>
+            <option value="minecraft:gold_ingot">Gold Ingot</option>
+            <option value="minecraft:diamond">Diamond</option>
+            <option value="minecraft:stick">Stick</option>
+            <option value="minecraft:oak_planks">Oak Planks</option>
+          </datalist>
+
+          <div className="sticky top-0 z-50 flex justify-between items-center bg-[#0A0A0C]/90 backdrop-blur-md border border-white/10 p-4 rounded-2xl shadow-xl -mx-4 px-8 mb-6">
+            <div className="text-xs text-white/50">
+              Status: <span className="text-emerald-400">Modificações Guardadas (Auto-Save)</span>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => {
+                if (activeRecipe) {
+                  if (window.confirm(`Tem a certeza que deseja eliminar '${displayName}'?`)) {
+                    store.deleteElement(activeRecipe.id, 'recipe');
+                    if (setActiveView) setActiveView('Dashboard');
+                  }
+                }
+              }} className="flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-lg font-bold text-sm transition-colors cursor-pointer">
+                <Trash2 size={16} /> Eliminar Receita
+              </button>
+              <button onClick={() => {
+                if (!activeRecipe?.registryName || !displayName) {
+                  alert("O nome e registry name são obrigatórios!");
+                  return;
+                }
+                alert(`Receita '${displayName}' salva com sucesso!`);
+              }} className="flex items-center gap-2 px-6 py-2 bg-amber-500 hover:bg-amber-400 text-black rounded-lg font-bold text-sm shadow-[0_0_15px_rgba(245,158,11,0.3)] transition-colors cursor-pointer">
+                <Save size={16} /> Salvar Alterações
+              </button>
+            </div>
+          </div>
+
           <header className="mb-8 flex items-end justify-between">
             <div>
               <h1 className="text-4xl font-extrabold tracking-tighter text-white mb-2 flex items-center gap-3 italic">
@@ -99,7 +137,7 @@ export const RecipeEditor = ({ setActiveView }: { setActiveView?: (view: string)
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-white/60 mb-1">Registry Name</label>
-                    <input type="text" value={activeRecipe.registryName} onChange={e => updateActiveRecipe({ registryName: e.target.value })} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white/50 focus:border-amber-500 outline-none" />
+                    <input type="text" value={activeRecipe.registryName} readOnly className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white/50 outline-none opacity-70 cursor-not-allowed" />
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-white/60 mb-1">Tipo de Receita</label>
@@ -125,6 +163,7 @@ export const RecipeEditor = ({ setActiveView }: { setActiveView?: (view: string)
                          <input 
                            key={i} 
                            placeholder="ID"
+                           list="available-items"
                            value={activeRecipe.ingredients[i] || ''}
                            onChange={(e) => updateIngredient(i, e.target.value)}
                            className="w-12 h-12 bg-black/60 border border-white/10 hover:border-amber-500/50 rounded flex items-center justify-center text-white text-xs text-center transition-colors outline-none"
@@ -135,6 +174,7 @@ export const RecipeEditor = ({ setActiveView }: { setActiveView?: (view: string)
                     <div className="flex flex-col gap-2">
                       <input 
                          placeholder="Result ID"
+                         list="available-items"
                          value={activeRecipe.resultItem}
                          onChange={(e) => updateActiveRecipe({ resultItem: e.target.value })}
                          className="w-16 h-12 bg-black/60 border border-amber-500/30 rounded text-amber-500 text-xs text-center outline-none"
@@ -156,6 +196,7 @@ export const RecipeEditor = ({ setActiveView }: { setActiveView?: (view: string)
                     <div className="flex flex-col gap-2 items-center">
                        <input 
                          placeholder="Input ID"
+                         list="available-items"
                          value={activeRecipe.ingredients[0] || ''}
                          onChange={(e) => updateIngredient(0, e.target.value)}
                          className="w-16 h-12 bg-black/60 border border-white/10 rounded text-white text-xs text-center outline-none"
@@ -166,6 +207,7 @@ export const RecipeEditor = ({ setActiveView }: { setActiveView?: (view: string)
                     <div className="flex flex-col gap-2">
                       <input 
                          placeholder="Result ID"
+                         list="available-items"
                          value={activeRecipe.resultItem}
                          onChange={(e) => updateActiveRecipe({ resultItem: e.target.value })}
                          className="w-16 h-12 bg-black/60 border border-amber-500/30 rounded text-amber-500 text-xs text-center outline-none"
@@ -179,35 +221,6 @@ export const RecipeEditor = ({ setActiveView }: { setActiveView?: (view: string)
           </div>
         </div>
       </div>
-
-      {/* Barra de Ações Fixa */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 bg-[#0A0A0C]/90 backdrop-blur-md border-t border-white/10 flex justify-between items-center z-50">
-        <div className="text-xs text-white/50 px-4">
-          Status: <span className="text-emerald-400">Modificações Guardadas (Auto-Save)</span>
-        </div>
-        <div className="flex gap-3 px-4">
-          <button onClick={() => {
-            if (activeRecipe) {
-              if (window.confirm(`Tem a certeza que deseja eliminar '${displayName}'?`)) {
-                store.deleteElement(activeRecipe.id, 'recipe');
-                if (setActiveView) setActiveView('Dashboard');
-              }
-            }
-          }} className="flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-lg font-bold text-sm transition-colors cursor-pointer">
-            <Trash2 size={16} /> Eliminar Receita
-          </button>
-          <button onClick={() => {
-            if (!activeRecipe?.registryName || !displayName) {
-              alert("O nome e registry name são obrigatórios!");
-              return;
-            }
-            alert(`Receita '${displayName}' salva com sucesso!`);
-          }} className="flex items-center gap-2 px-6 py-2 bg-amber-500 hover:bg-amber-400 text-black rounded-lg font-bold text-sm shadow-[0_0_15px_rgba(245,158,11,0.3)] transition-colors cursor-pointer">
-            <Save size={16} /> Salvar Alterações
-          </button>
-        </div>
-      </div>
-
     </div>
   );
 };

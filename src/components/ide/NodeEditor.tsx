@@ -390,7 +390,7 @@ function DnDFlow() {
   };
 
   return (
-    <div className="flex w-full h-full bg-[#0A0A0C]">
+    <div className="flex flex-1 w-full h-full min-h-0 bg-[#0A0A0C]">
       {/* Toolbox Sidebar */}
       <div className="w-64 bg-[#0D0D11] border-r border-white/5 flex flex-col z-10">
         <div className="p-4 border-b border-white/5">
@@ -561,7 +561,7 @@ function DnDFlow() {
       </div>
 
       {/* Editor Canvas Area */}
-      <div className="flex-1 border-l border-white/5 relative overflow-hidden h-full w-full" ref={reactFlowWrapper}>
+      <div className="relative flex-1 w-full h-full min-h-0 overflow-hidden border-l border-white/5" ref={reactFlowWrapper}>
         {ejectedToScript ? (
           <div className="w-full h-full bg-[#1e1e1e] flex flex-col relative">
             <div className="bg-[#2d2d2d] p-3 border-b border-black/50 flex justify-between items-center">
@@ -703,8 +703,10 @@ function DnDFlow() {
 
 export function NodeEditor() {
   return (
-    <ReactFlowProvider>
-      <DnDFlow />
-    </ReactFlowProvider>
+    <div className="flex flex-col flex-1 relative w-full h-full min-h-0 overflow-hidden">
+      <ReactFlowProvider>
+        <DnDFlow />
+      </ReactFlowProvider>
+    </div>
   );
 }

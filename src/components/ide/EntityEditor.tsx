@@ -142,6 +142,27 @@ ${drops.length > 0 ? drops.map(d => `    // - ${d.item} (Chance: ${d.chance}%, M
     <div className="flex-1 bg-[radial-gradient(circle_at_top_right,_#1a1510_0%,_#0A0A0C_60%)] flex flex-col relative overflow-hidden">
       <div className="flex-1 p-8 overflow-y-auto">
         <div className="max-w-6xl mx-auto">
+          <div className="sticky top-0 z-50 flex justify-between items-center bg-[#0A0A0C]/90 backdrop-blur-md border border-white/10 p-4 rounded-2xl shadow-xl -mx-4 px-8 mb-6">
+            <div className="text-xs text-white/50">
+              Status: <span className="text-emerald-400">Pronto para salvar na Store</span>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => {
+                alert("Para eliminar, gerencie pelo Dashboard neste preview.");
+              }} className="flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-lg font-bold text-sm transition-colors cursor-pointer">
+                <Trash2 size={16} /> Eliminar
+              </button>
+              <button onClick={() => {
+                if (!displayName || !registryName) {
+                  alert("O nome e registry name são obrigatórios!");
+                  return;
+                }
+                alert(`Entidade '${displayName}' salva com sucesso (MocK)!`);
+              }} className="flex items-center gap-2 px-6 py-2 bg-amber-500 hover:bg-amber-400 text-black rounded-lg font-bold text-sm shadow-[0_0_15px_rgba(245,158,11,0.3)] transition-colors cursor-pointer">
+                <Save size={16} /> Salvar Alterações
+              </button>
+            </div>
+          </div>
           <header className="mb-8">
             <h1 className="text-4xl font-extrabold tracking-tighter text-white mb-2 flex items-center gap-3 italic">
               <Sparkles className="text-amber-500 w-8 h-8" />
@@ -164,7 +185,7 @@ ${drops.length > 0 ? drops.map(d => `    // - ${d.item} (Chance: ${d.chance}%, M
                    </div>
                    <div>
                      <label className="block text-xs font-semibold text-white/60 mb-1">Registry Name</label>
-                     <input type="text" value={registryName} onChange={e => setRegistryName(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white/50 focus:border-amber-500 outline-none transition-all" />
+                     <input type="text" value={registryName} readOnly className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white/50 outline-none opacity-70 cursor-not-allowed transition-all" />
                    </div>
                    <div>
                      <label className="block text-xs font-semibold text-white/60 mb-1 mt-4">Tipo de Entidade</label>
@@ -472,31 +493,6 @@ ${drops.length > 0 ? drops.map(d => `    // - ${d.item} (Chance: ${d.chance}%, M
 
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Barra de Ações Fixa */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 bg-[#0A0A0C]/90 backdrop-blur-md border-t border-white/10 flex justify-between items-center z-50">
-        <div className="text-xs text-white/50 px-4">
-          Status: <span className="text-emerald-400">Pronto para salvar na Store</span>
-        </div>
-        <div className="flex gap-3 px-4">
-          <button onClick={() => {
-            if (window.confirm(`Tem a certeza que deseja eliminar '${displayName}'?`)) {
-              if (setActiveView) setActiveView('Dashboard');
-            }
-          }} className="flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-lg font-bold text-sm transition-colors cursor-pointer">
-            <Trash2 size={16} /> Eliminar Entidade
-          </button>
-          <button onClick={() => {
-            if (!displayName || !registryName) {
-              alert("O nome e registry name são obrigatórios!");
-              return;
-            }
-            alert(`Entidade '${displayName}' salva com sucesso! (Apenas UI, integração de store em desenvolvimento)`);
-          }} className="flex items-center gap-2 px-6 py-2 bg-amber-500 hover:bg-amber-400 text-black rounded-lg font-bold text-sm shadow-[0_0_15px_rgba(245,158,11,0.3)] transition-colors cursor-pointer">
-            <Save size={16} /> Salvar Alterações
-          </button>
         </div>
       </div>
     </div>
