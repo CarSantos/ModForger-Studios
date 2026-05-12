@@ -15,7 +15,12 @@ export const TopBar = ({ projectSettings }: TopBarProps) => {
           <button className="px-3 py-1 text-xs font-medium rounded bg-white/10 text-white">Visual</button>
           <button className="px-3 py-1 text-xs font-medium rounded hover:bg-white/5 text-white/60 transition-colors">Código Fonte</button>
         </div>
-        <span className="text-xs font-medium text-white/40">/ {rootName} / src / <span className="text-white/80">SuperMinério.json</span></span>
+        <span className="text-xs font-medium text-white/40">/ {rootName} / workspace</span>
+        
+        <div className="flex items-center gap-1.5 ml-4 px-2 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-md">
+           <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)]"></div>
+           <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Alterações guardadas</span>
+        </div>
       </div>
 
       <div className="flex items-center gap-3">

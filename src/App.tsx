@@ -31,7 +31,7 @@ export default function App() {
   return (
     <div className="flex h-screen w-full bg-[#0A0A0C] text-[#E2E2E9] font-sans overflow-hidden">
       <Sidebar projectSettings={projectSettings} activeView={activeView} setActiveView={setActiveView} />
-      <div className="flex flex-col flex-1">
+      <div className="flex flex-col flex-1 h-screen overflow-hidden min-w-0 min-h-0">
         <TopBar projectSettings={projectSettings} />
         {activeView === 'Dashboard' && <DashboardView projectSettings={projectSettings} setProjectSettings={setProjectSettings} setActiveView={setActiveView} />}
         {activeView === 'Blocos' && <BlockEditor setActiveView={setActiveView} />}

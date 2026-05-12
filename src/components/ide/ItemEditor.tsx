@@ -55,6 +55,7 @@ export const ItemEditor = () => {
   const isTool = ['pickaxe', 'axe', 'shovel', 'hoe'].includes(activeItem.type);
   const isArmor = activeItem.type === 'armor';
   const isShield = activeItem.type === 'shield';
+  const isRanged = ['bow', 'ranged'].includes(activeItem.type);
 
   return (
     <div className="flex-1 bg-[radial-gradient(circle_at_top_right,_#1a1510_0%,_#0A0A0C_60%)] flex flex-col relative overflow-hidden">
@@ -123,6 +124,8 @@ export const ItemEditor = () => {
                             <option value="hoe">Enxada</option>
                             <option value="shield">Escudo</option>
                             <option value="armor">Armadura</option>
+                            <option value="bow">Arco (Bow)</option>
+                            <option value="ranged">Arma de Fogo (Gun)</option>
                             <option value="food">Comida</option>
                          </select>
                          <label className="block text-xs font-semibold text-white/60 mb-1">Stack Máximo</label>
@@ -198,6 +201,33 @@ export const ItemEditor = () => {
                             </div>
                           </>
                         )}
+                      </div>
+                   </div>
+                 )}
+
+                 {isRanged && (
+                   <div className="col-span-full md:col-span-2 bg-white/[0.02] border border-white/10 rounded-2xl p-6 backdrop-blur-sm">
+                      <h3 className="text-white font-bold mb-4 border-b border-white/5 pb-2 flex items-center gap-2"><Box size={16}/> Propriedades de Longo Alcance</h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-[10px] font-semibold text-white/60 mb-1">Tipo de Projétil</label>
+                          <select value={(activeItem as any).projectileType || 'arrow'} onChange={e => updateItem({ projectileType: e.target.value } as any)} className="w-full bg-black/40 border border-white/10 rounded p-2 text-xs text-white">
+                             <option value="arrow">Flechas (Padrão)</option>
+                             <option value="custom">Projétil Customizado</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-semibold text-white/60 mb-1">Dano Adicional / Power</label>
+                          <input type="number" step="0.5" value={(activeItem as any).rangedDamage || 2} onChange={e => updateItem({ rangedDamage: Number(e.target.value) } as any)} className="w-full bg-black/40 border border-white/10 rounded p-2 text-xs text-white" />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-semibold text-white/60 mb-1">Velocidade de Puxada (Ticks)</label>
+                          <input type="number" min="0" value={(activeItem as any).drawSpeed || 20} onChange={e => updateItem({ drawSpeed: Number(e.target.value) } as any)} className="w-full bg-black/40 border border-white/10 rounded p-2 text-xs text-white" />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-semibold text-white/60 mb-1">ID da Munição Necessária</label>
+                          <input type="text" placeholder="minecraft:arrow" value={(activeItem as any).ammoItemId || ''} onChange={e => updateItem({ ammoItemId: e.target.value } as any)} className="w-full bg-black/40 border border-white/10 rounded p-2 text-xs text-white" />
+                        </div>
                       </div>
                    </div>
                  )}

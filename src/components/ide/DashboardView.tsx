@@ -200,60 +200,80 @@ export const DashboardView = ({ projectSettings, setProjectSettings, setActiveVi
             {store.items.map((item, idx) => (
               <div 
                 key={idx} 
-                className="bg-black/40 border border-white/10 hover:border-white/20 rounded-xl p-4 cursor-pointer transition-colors group"
+                className="bg-black/40 border border-white/10 hover:border-amber-500/30 rounded-xl p-4 cursor-pointer transition-colors group relative"
                 onClick={() => handleOpenElement(item.id, 'item', 'Itens')}
               >
+                 <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="bg-amber-500/10 text-amber-500 p-1.5 rounded-lg border border-amber-500/20">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                    </div>
+                 </div>
                  <div className="flex justify-between items-start mb-3">
                   <div className={`w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-500 flex items-center justify-center border border-cyan-500/30`}>
                      <Box size={16} />
                   </div>
                 </div>
-                <h4 className="text-sm font-bold text-white group-hover:text-amber-400 transition-colors truncate">{item.displayName}</h4>
+                <h4 className="text-sm font-bold text-white group-hover:text-amber-400 transition-colors truncate pr-6">{item.displayName}</h4>
                 <div className="text-[10px] uppercase font-bold tracking-wider text-white/40 mt-1">Item</div>
               </div>
             ))}
             {store.blocks.map((block, idx) => (
               <div 
                 key={`block-${idx}`} 
-                className="bg-black/40 border border-white/10 hover:border-white/20 rounded-xl p-4 cursor-pointer transition-colors group"
+                className="bg-black/40 border border-white/10 hover:border-amber-500/30 rounded-xl p-4 cursor-pointer transition-colors group relative"
                 onClick={() => handleOpenElement(block.id, 'block', 'Blocos')}
               >
+                 <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="bg-amber-500/10 text-amber-500 p-1.5 rounded-lg border border-amber-500/20">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                    </div>
+                 </div>
                 <div className="flex justify-between items-start mb-3">
                   <div className={`w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-500 flex items-center justify-center border border-emerald-500/30`}>
                      <Box size={16} />
                   </div>
                 </div>
-                <h4 className="text-sm font-bold text-white group-hover:text-amber-400 transition-colors truncate">{block.displayName}</h4>
+                <h4 className="text-sm font-bold text-white group-hover:text-amber-400 transition-colors truncate pr-6">{block.displayName}</h4>
                 <div className="text-[10px] uppercase font-bold tracking-wider text-white/40 mt-1">Bloco</div>
               </div>
             ))}
             {store.structures.map((struct, idx) => (
               <div 
                 key={`struct-${idx}`} 
-                className="bg-black/40 border border-white/10 hover:border-white/20 rounded-xl p-4 cursor-pointer transition-colors group"
+                className="bg-black/40 border border-white/10 hover:border-amber-500/30 rounded-xl p-4 cursor-pointer transition-colors group relative"
                 onClick={() => handleOpenElement(struct.id, 'structure', 'Mundo')}
               >
+                 <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="bg-amber-500/10 text-amber-500 p-1.5 rounded-lg border border-amber-500/20">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                    </div>
+                 </div>
                 <div className="flex justify-between items-start mb-3">
                   <div className={`w-8 h-8 rounded-lg bg-amber-500/20 text-amber-500 flex items-center justify-center border border-amber-500/30`}>
                      <Box size={16} />
                   </div>
                 </div>
-                <h4 className="text-sm font-bold text-white group-hover:text-amber-400 transition-colors truncate">{struct.displayName}</h4>
+                <h4 className="text-sm font-bold text-white group-hover:text-amber-400 transition-colors truncate pr-6">{struct.displayName}</h4>
                 <div className="text-[10px] uppercase font-bold tracking-wider text-white/40 mt-1">Estrutura</div>
               </div>
             ))}
             {store.lootTables.map((loot, idx) => (
               <div 
                 key={`loot-${idx}`} 
-                className="bg-black/40 border border-white/10 hover:border-white/20 rounded-xl p-4 cursor-pointer transition-colors group"
+                className="bg-black/40 border border-white/10 hover:border-amber-500/30 rounded-xl p-4 cursor-pointer transition-colors group relative"
                 onClick={() => handleOpenElement(loot.id, 'loot', 'Loots')}
               >
+                 <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="bg-amber-500/10 text-amber-500 p-1.5 rounded-lg border border-amber-500/20">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                    </div>
+                 </div>
                 <div className="flex justify-between items-start mb-3">
                   <div className={`w-8 h-8 rounded-lg bg-yellow-400/20 text-yellow-400 flex items-center justify-center border border-yellow-400/30`}>
                      <Box size={16} />
                   </div>
                 </div>
-                <h4 className="text-sm font-bold text-white group-hover:text-amber-400 transition-colors truncate">{loot.registryName}</h4>
+                <h4 className="text-sm font-bold text-white group-hover:text-amber-400 transition-colors truncate pr-6">{loot.registryName}</h4>
                 <div className="text-[10px] uppercase font-bold tracking-wider text-white/40 mt-1">Loot Table</div>
               </div>
             ))}
