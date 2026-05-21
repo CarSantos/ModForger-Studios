@@ -23,17 +23,19 @@ export const ItemEditor = () => {
     if (!activeItem) return;
     
     const newUpdates = { ...updates };
+    const modId = store.projectSettings?.modId || 'mymod';
     if (updates.displayName) {
-      newUpdates.registryName = 'mymod:' + generateRegistryName(updates.displayName);
+      newUpdates.registryName = `${modId}:` + generateRegistryName(updates.displayName);
     }
     
     store.updateItem(activeItem.id, newUpdates);
   };
 
   const createItem = () => {
+    const modId = store.projectSettings?.modId || 'mymod';
     const newItem: ItemIR = {
       id: Math.random().toString(36).substring(2, 9),
-      registryName: 'mymod:novo_item',
+      registryName: `${modId}:novo_item`,
       displayName: 'Novo Item',
       type: 'material',
       maxStackSize: 64

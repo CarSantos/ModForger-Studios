@@ -1,8 +1,10 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { ItemIR, BlockIR, EntityIR, StructureIR, LootTableIR, LogicGraphIR, RecipeIR } from '../types/ir';
+import { ProjectSettings } from '../components/ide/Launcher';
 
 interface ModState {
+  projectSettings: ProjectSettings | null;
   items: ItemIR[];
   blocks: BlockIR[];
   entities: EntityIR[];
@@ -16,6 +18,9 @@ interface ModState {
   activeView: string;
 
   // Actions
+  setProjectSettings: (settings: ProjectSettings | null) => void;
+  clearWorkspace: () => void;
+  loadWorkspace: (data: any) => void;
   setActiveView: (view: string) => void;
   openLogicGraph: (graphId: string) => void;
   addItem: (item: ItemIR) => void;
@@ -50,6 +55,7 @@ interface ModState {
 export const useModStore = create<ModState>()(
   persist(
     (set) => ({
+      projectSettings: null,
       items: [
         // Mock data logic defaults to store
         {
@@ -70,6 +76,13 @@ export const useModStore = create<ModState>()(
       activeElementType: null,
       activeLogicGraphId: null,
       activeView: 'Dashboard',
+
+      setProjectSettings: (s) => set({ projectSettings: s }),
+      clearWorkspace: () => set({
+        items: [], blocks: [], entities: [], structures: [], lootTables: [], recipes: [],
+        logicGraphs: {}, activeElementId: null, activeElementType: null, activeLogicGraphId: null, activeView: 'Dashboard'
+      }),
+      loadWorkspace: (data) => set({ ...data, activeElementId: null, activeElementType: null, activeView: 'Dashboard' }),
 
       setActiveView: (view) => set({ activeView: view }),
       openLogicGraph: (graphId) => set({ activeLogicGraphId: graphId, activeView: 'Lógica (Nodos)' }),
@@ -140,7 +153,7 @@ export const useModStore = create<ModState>()(
         
         return { 
           items, blocks, structures, lootTables, recipes, entities,
-          ...(isDeletingActive ? { activeElementId: null, activeElementType: null } : {})
+          ...(isDeletingActive ? { activeElementId: null, activeElementType: null, activeView: 'Dashboard' } : {})
         };
       }),
 

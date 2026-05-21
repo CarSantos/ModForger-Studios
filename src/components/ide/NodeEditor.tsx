@@ -390,7 +390,7 @@ function DnDFlow() {
   };
 
   return (
-    <div className="flex flex-1 w-full h-full min-h-0 bg-[#0A0A0C]">
+    <div className="flex flex-1 w-full h-full min-h-0 bg-[#0A0A0C] overflow-hidden">
       {/* Toolbox Sidebar */}
       <div className="w-64 bg-[#0D0D11] border-r border-white/5 flex flex-col z-10">
         <div className="p-4 border-b border-white/5">
@@ -578,7 +578,7 @@ function DnDFlow() {
             />
           </div>
         ) : (
-          <div className="absolute inset-0 w-full h-full">
+          <div className="relative w-full h-full flex-1 min-h-0 overflow-hidden">
             <ReactFlow
               nodes={nodes}
               edges={edges}

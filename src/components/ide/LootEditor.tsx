@@ -27,7 +27,8 @@ export const LootEditor = ({ setActiveView }: { setActiveView?: (view: string) =
 
   const handleNameChange = (name: string) => {
     setDisplayName(name);
-    updateActiveLoot({ registryName: 'mymod:' + generateRegistryName(name) });
+    const modId = store.projectSettings?.modId || 'mymod';
+    updateActiveLoot({ registryName: `${modId}:` + generateRegistryName(name) });
   };
 
   const updateActiveLoot = (updates: Partial<LootTableIR>) => {
@@ -66,7 +67,8 @@ export const LootEditor = ({ setActiveView }: { setActiveView?: (view: string) =
         <p className="text-white/50 mb-4">Nenhuma Loot Table selecionada ou criada.</p>
         <button 
           onClick={() => {
-            const newLoot: LootTableIR = { id: Math.random().toString(36).substr(2, 9), registryName: 'mymod:custom_loot', pools: [] };
+            const modId = store.projectSettings?.modId || 'mymod';
+            const newLoot: LootTableIR = { id: Math.random().toString(36).substr(2, 9), registryName: `${modId}:custom_loot`, pools: [] };
             store.addLootTable(newLoot);
             store.openElement(newLoot.id, 'loot');
           }}
@@ -108,8 +110,8 @@ export const LootEditor = ({ setActiveView }: { setActiveView?: (view: string) =
                 <input 
                    type="text" 
                    value={activeLoot.registryName} 
-                   onChange={e => updateActiveLoot({ registryName: e.target.value })} 
-                   className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white/50 focus:border-amber-500 outline-none" 
+                   readOnly 
+                   className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white/50 outline-none opacity-70 cursor-not-allowed" 
                    placeholder="Ex: mymod:bau_de_ouro"
                 />
               </div>

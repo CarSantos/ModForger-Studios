@@ -197,9 +197,9 @@ export const DashboardView = ({ projectSettings, setProjectSettings, setActiveVi
           </div>
           
           <div className="grid grid-cols-4 gap-4">
-            {store.items.map((item, idx) => (
+            {store.items.map((item) => (
               <div 
-                key={idx} 
+                key={item.id} 
                 className="bg-black/40 border border-white/10 hover:border-amber-500/30 rounded-xl p-4 cursor-pointer transition-colors group relative"
                 onClick={() => handleOpenElement(item.id, 'item', 'Itens')}
               >
@@ -217,9 +217,9 @@ export const DashboardView = ({ projectSettings, setProjectSettings, setActiveVi
                 <div className="text-[10px] uppercase font-bold tracking-wider text-white/40 mt-1">Item</div>
               </div>
             ))}
-            {store.blocks.map((block, idx) => (
+            {store.blocks.map((block) => (
               <div 
-                key={`block-${idx}`} 
+                key={block.id} 
                 className="bg-black/40 border border-white/10 hover:border-amber-500/30 rounded-xl p-4 cursor-pointer transition-colors group relative"
                 onClick={() => handleOpenElement(block.id, 'block', 'Blocos')}
               >
@@ -237,9 +237,9 @@ export const DashboardView = ({ projectSettings, setProjectSettings, setActiveVi
                 <div className="text-[10px] uppercase font-bold tracking-wider text-white/40 mt-1">Bloco</div>
               </div>
             ))}
-            {store.structures.map((struct, idx) => (
+            {store.structures.map((struct) => (
               <div 
-                key={`struct-${idx}`} 
+                key={struct.id} 
                 className="bg-black/40 border border-white/10 hover:border-amber-500/30 rounded-xl p-4 cursor-pointer transition-colors group relative"
                 onClick={() => handleOpenElement(struct.id, 'structure', 'Mundo')}
               >
@@ -257,9 +257,9 @@ export const DashboardView = ({ projectSettings, setProjectSettings, setActiveVi
                 <div className="text-[10px] uppercase font-bold tracking-wider text-white/40 mt-1">Estrutura</div>
               </div>
             ))}
-            {store.recipes?.map((recipe, idx) => (
+            {store.recipes?.map((recipe) => (
               <div 
-                key={`recipe-${idx}`} 
+                key={recipe.id} 
                 className="bg-black/40 border border-white/10 hover:border-amber-500/30 rounded-xl p-4 cursor-pointer transition-colors group relative"
                 onClick={() => handleOpenElement(recipe.id, 'recipe' as any, 'Receitas')}
               >
@@ -277,9 +277,9 @@ export const DashboardView = ({ projectSettings, setProjectSettings, setActiveVi
                 <div className="text-[10px] uppercase font-bold tracking-wider text-white/40 mt-1">Receita</div>
               </div>
             ))}
-            {store.lootTables.map((loot, idx) => (
+            {store.lootTables.map((loot) => (
               <div 
-                key={`loot-${idx}`} 
+                key={loot.id} 
                 className="bg-black/40 border border-white/10 hover:border-amber-500/30 rounded-xl p-4 cursor-pointer transition-colors group relative"
                 onClick={() => handleOpenElement(loot.id, 'loot', 'Loots')}
               >

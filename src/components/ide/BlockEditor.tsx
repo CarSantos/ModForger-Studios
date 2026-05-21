@@ -23,8 +23,9 @@ export const BlockEditor = ({ setActiveView }: { setActiveView?: (view: string) 
     if (!activeBlock) return;
     
     const newUpdates = { ...updates };
-    if (updates.displayName && !updates.registryName) {
-      newUpdates.registryName = 'mymod:' + generateRegistryName(updates.displayName);
+    const modId = store.projectSettings?.modId || 'mymod';
+    if (updates.displayName) {
+      newUpdates.registryName = `${modId}:` + generateRegistryName(updates.displayName);
     }
     
     store.updateBlock(activeBlock.id, newUpdates);
@@ -60,9 +61,10 @@ export const BlockEditor = ({ setActiveView }: { setActiveView?: (view: string) 
         <p className="text-white/50 mb-4">Nenhum Bloco selecionado ou criado.</p>
         <button 
           onClick={() => {
+            const modId = store.projectSettings?.modId || 'mymod';
             const newBlock: BlockIR = { 
               id: Math.random().toString(36).substr(2, 9), 
-              registryName: 'mymod:novo_bloco', 
+              registryName: `${modId}:novo_bloco`, 
               displayName: 'Novo Bloco',
               material: 'rock',
               hardness: 3.0,
@@ -105,7 +107,7 @@ export const BlockEditor = ({ setActiveView }: { setActiveView?: (view: string) 
                    </div>
                    <div>
                      <label className="block text-xs font-semibold text-white/60 mb-1">Namespace ID</label>
-                     <input type="text" value={activeBlock.registryName} onChange={e => updateActiveBlock({ registryName: e.target.value })} className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white/50 focus:border-amber-500 outline-none transition-all" />
+                     <input type="text" value={activeBlock.registryName} readOnly className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white/50 outline-none opacity-70 cursor-not-allowed transition-all" />
                    </div>
                  </div>
               </div>

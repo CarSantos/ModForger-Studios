@@ -7,10 +7,11 @@ import { generateRegistryName } from '../../lib/utils';
 export const WorldEditor = () => {
   const [activeTab, setActiveTab] = useState('biomes');
   const store = useModStore();
+  const modId = store.projectSettings?.modId || 'mymod';
   
   // Biome state
   const [biomeName, setBiomeName] = useState('Novo Bioma');
-  const [biomeRegistry, setBiomeRegistry] = useState('mymod:novo_bioma');
+  const [biomeRegistry, setBiomeRegistry] = useState(`${modId}:novo_bioma`);
   const [grassColor, setGrassColor] = useState('#7C9E2E');
   const [waterColor, setWaterColor] = useState('#3F76E4');
   const [treeDensity, setTreeDensity] = useState(5);
@@ -20,12 +21,12 @@ export const WorldEditor = () => {
 
   const handleBiomeNameChange = (name: string) => {
     setBiomeName(name);
-    setBiomeRegistry('mymod:' + generateRegistryName(name));
+    setBiomeRegistry(`${modId}:` + generateRegistryName(name));
   };
 
   // Dimension state
   const [dimName, setDimName] = useState('Nova Dimensão');
-  const [dimRegistry, setDimRegistry] = useState('mymod:nova_dimensao');
+  const [dimRegistry, setDimRegistry] = useState(`${modId}:nova_dimensao`);
   const [skyColor, setSkyColor] = useState('#78A7FF');
   const [genType, setGenType] = useState('default');
   const [portalBlock, setPortalBlock] = useState('minecraft:obsidian');
@@ -33,7 +34,7 @@ export const WorldEditor = () => {
 
   const handleDimNameChange = (name: string) => {
     setDimName(name);
-    setDimRegistry('mymod:' + generateRegistryName(name));
+    setDimRegistry(`${modId}:` + generateRegistryName(name));
   };
 
   // Structure state (from store)
@@ -58,7 +59,7 @@ export const WorldEditor = () => {
 
   const handleStructureNameChange = (name: string) => {
     if (!activeStruct) return;
-    updateActiveStruct({ displayName: name, registryName: 'mymod:' + generateRegistryName(name) });
+    updateActiveStruct({ displayName: name, registryName: `${modId}:` + generateRegistryName(name) });
   };
 
   const setDragActive = (active: boolean) => {
@@ -79,7 +80,7 @@ export const WorldEditor = () => {
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const file = Array.from(e.dataTransfer.files).find((f: File) => f.name.endsWith('.nbt') || f.name.endsWith('.bbmodel') || f.name.endsWith('.schem'));
       if (file && activeStruct) {
-          updateActiveStruct({ registryName: 'mymod:' + file.name.replace(/\.[^/.]+$/, "") });
+          updateActiveStruct({ registryName: `${modId}:` + file.name.replace(/\.[^/.]+$/, "") });
       }
     }
   };

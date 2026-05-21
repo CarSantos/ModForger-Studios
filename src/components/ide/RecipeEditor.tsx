@@ -32,13 +32,15 @@ export const RecipeEditor = ({ setActiveView }: { setActiveView?: (view: string)
 
   const handleNameChange = (name: string) => {
     setDisplayName(name);
-    updateActiveRecipe({ displayName: name, registryName: 'mymod:' + generateRegistryName(name) });
+    const modId = store.projectSettings?.modId || 'mymod';
+    updateActiveRecipe({ displayName: name, registryName: `${modId}:` + generateRegistryName(name) });
   };
 
   const createRecipe = () => {
+    const modId = store.projectSettings?.modId || 'mymod';
     const newRecipe: RecipeIR = {
       id: Math.random().toString(36).substring(2, 9),
-      registryName: 'mymod:nova_receita',
+      registryName: `${modId}:nova_receita`,
       displayName: 'Nova Receita',
       type: 'crafting_shaped',
       resultItem: 'minecraft:stone',

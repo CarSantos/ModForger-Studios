@@ -20,12 +20,18 @@ import { Launcher, ProjectSettings } from './components/ide/Launcher';
 import { useModStore } from './store/modStore';
 
 export default function App() {
-  const [projectSettings, setProjectSettings] = useState<ProjectSettings | null>(null);
+  const projectSettings = useModStore(state => state.projectSettings);
+  const setProjectSettings = useModStore(state => state.setProjectSettings);
   const activeView = useModStore(state => state.activeView);
   const setActiveView = useModStore(state => state.setActiveView);
+  const clearWorkspace = useModStore(state => state.clearWorkspace);
 
   if (!projectSettings) {
-    return <Launcher onStartProject={setProjectSettings} />;
+    return <Launcher onStartProject={(settings) => {
+      // Create new project resets workspace.
+      clearWorkspace();
+      setProjectSettings(settings);
+    }} />;
   }
 
   return (

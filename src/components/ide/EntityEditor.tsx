@@ -2,15 +2,38 @@ import { useState, useEffect } from 'react';
 import { Sparkles, Box, FileCode2, Info, Plus, Trash2, Skull, Heart, Droplets, Save } from 'lucide-react';
 import { ThreeDViewer } from './ThreeDViewer';
 import { generateRegistryName } from '../../lib/utils';
+import { useModStore } from '../../store/modStore';
 
 export const EntityEditor = ({ setActiveView }: { setActiveView?: (view: string) => void }) => {
 
+  const store = useModStore();
+  
+  const [activeEntity, setActiveEntity] = useState<import('../../types/ir').EntityIR | null>(null);
+
+  useEffect(() => {
+    if (store.activeElementId && store.activeElementType === 'entity') {
+      const found = store.entities.find(e => e.id === store.activeElementId);
+      if (found) {
+        setActiveEntity(found);
+        setDisplayName(found.displayName || 'Nova Entidade');
+        setRegistryName(found.registryName || `${store.projectSettings?.modId || 'mymod'}:nova_entidade`);
+        setEntityType(found.type || 'hostile');
+        if (found.health) setHealth(found.health);
+        if (found.damage) setDamage(found.damage);
+        if (found.speed) setSpeed(found.speed);
+      }
+    } else if (store.entities.length > 0) {
+      setActiveEntity(store.entities[0]);
+    }
+  }, [store.activeElementId, store.activeElementType, store.entities]);
+
   const [displayName, setDisplayName] = useState('Nova Entidade');
-  const [registryName, setRegistryName] = useState('mymod:nova_entidade');
+  const modId = store.projectSettings?.modId || 'mymod';
+  const [registryName, setRegistryName] = useState(`${modId}:nova_entidade`);
   
   const handleNameChange = (name: string) => {
     setDisplayName(name);
-    setRegistryName('mymod:' + generateRegistryName(name));
+    setRegistryName(`${modId}:` + generateRegistryName(name));
   };
 
   const [entityType, setEntityType] = useState('hostile'); // hostile, passive, neutral, boss
@@ -138,6 +161,36 @@ ${drops.length > 0 ? drops.map(d => `    // - ${d.item} (Chance: ${d.chance}%, M
 `;
   };
 
+  const createEntity = () => {
+    const modId = store.projectSettings?.modId || 'mymod';
+    const newEntity: import('../../types/ir').EntityIR = {
+      id: Math.random().toString(36).substring(2, 9),
+      registryName: `${modId}:nova_entidade`,
+      displayName: 'Nova Entidade',
+      type: 'hostile',
+      health: 20,
+      damage: 3,
+      speed: 0.25
+    };
+    store.updateElement(newEntity.id, 'entity', newEntity);
+    store.openElement(newEntity.id, 'entity');
+  };
+
+  if (!activeEntity) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center bg-[radial-gradient(circle_at_top_right,_#1a1510_0%,_#0A0A0C_60%)] relative">
+        <Skull className="text-white/20 w-16 h-16 mb-4" />
+        <p className="text-white/50 mb-4">Nenhuma Entidade selecionada ou criada.</p>
+        <button 
+          onClick={createEntity}
+          className="bg-amber-500 hover:bg-amber-400 text-black px-4 py-2 rounded-lg font-bold shadow-[0_0_15px_rgba(245,158,11,0.3)] transition-colors"
+        >
+          Criar Nova Entidade
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 bg-[radial-gradient(circle_at_top_right,_#1a1510_0%,_#0A0A0C_60%)] flex flex-col relative overflow-hidden">
       <div className="flex-1 p-8 overflow-y-auto">
@@ -148,16 +201,23 @@ ${drops.length > 0 ? drops.map(d => `    // - ${d.item} (Chance: ${d.chance}%, M
             </div>
             <div className="flex gap-3">
               <button onClick={() => {
-                alert("Para eliminar, gerencie pelo Dashboard neste preview.");
+                if (!activeEntity) return;
+                if (window.confirm(`Tem a certeza que deseja eliminar '${displayName}'?`)) {
+                  store.deleteElement(activeEntity.id, 'entity');
+                  if (setActiveView) setActiveView('Dashboard');
+                }
               }} className="flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-lg font-bold text-sm transition-colors cursor-pointer">
                 <Trash2 size={16} /> Eliminar
               </button>
               <button onClick={() => {
+                if (!activeEntity) return;
                 if (!displayName || !registryName) {
                   alert("O nome e registry name são obrigatórios!");
                   return;
                 }
-                alert(`Entidade '${displayName}' salva com sucesso (MocK)!`);
+                const newUpdates = { displayName: displayName, registryName: registryName, type: entityType, health, damage, speed, drops };
+                store.updateElement(activeEntity.id, 'entity', newUpdates);
+                alert(`Entidade '${displayName}' salva com sucesso!`);
               }} className="flex items-center gap-2 px-6 py-2 bg-amber-500 hover:bg-amber-400 text-black rounded-lg font-bold text-sm shadow-[0_0_15px_rgba(245,158,11,0.3)] transition-colors cursor-pointer">
                 <Save size={16} /> Salvar Alterações
               </button>
