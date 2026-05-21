@@ -2,7 +2,7 @@ import { Image as ImageIcon, Paintbrush, MousePointer2, Settings2, Eraser, Downl
 import { useState, useRef, useEffect } from 'react';
 import { generateRegistryName } from '../../lib/utils';
 
-export const TextureEditor = () => {
+export const TextureEditor = ({ setActiveView }: { setActiveView?: (view: string) => void }) => {
   const [tool, setTool] = useState('pencil'); // pencil, eraser, fill
   const [color, setColor] = useState('#ff0000');
   const [brushSize, setBrushSize] = useState(1);

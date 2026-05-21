@@ -41,17 +41,17 @@ export default function App() {
         <TopBar projectSettings={projectSettings} />
         {activeView === 'Dashboard' && <DashboardView projectSettings={projectSettings} setProjectSettings={setProjectSettings} setActiveView={setActiveView} />}
         {activeView === 'Blocos' && <BlockEditor setActiveView={setActiveView} />}
-        {activeView === 'Itens' && <ItemEditor />}
-        {activeView === 'Projéteis' && <ProjectileEditor />}
+        {activeView === 'Itens' && <ItemEditor setActiveView={setActiveView} />}
+        {activeView === 'Projéteis' && <ProjectileEditor setActiveView={setActiveView} />}
         {activeView === 'Entidades' && <EntityEditor setActiveView={setActiveView} />}
-        {activeView === 'Loots' && <LootEditor />}
-        {activeView === 'Mundo' && <WorldEditor />}
+        {activeView === 'Loots' && <LootEditor setActiveView={setActiveView} />}
+        {activeView === 'Mundo' && <WorldEditor setActiveView={setActiveView} />}
         {activeView === 'Encantamentos' && <EnchantmentEditor setActiveView={setActiveView} />}
         {activeView === 'Efeitos' && <EffectEditor setActiveView={setActiveView} />}
-        {activeView === 'Modelos' && <ModelEditor />}
-        {activeView === 'Texturas' && <TextureEditor />}
+        {activeView === 'Modelos' && <ModelEditor setActiveView={setActiveView} />}
+        {activeView === 'Texturas' && <TextureEditor setActiveView={setActiveView} />}
         {activeView === 'Receitas' && <RecipeEditor setActiveView={setActiveView} />}
-        {activeView === 'Lógica (Nodos)' && <NodeEditor />}
+        {activeView === 'Lógica (Nodos)' && <NodeEditor setActiveView={setActiveView} />}
         {activeView === 'Sistemas Custom' && <CustomSystemsEditor setActiveView={setActiveView} />}
         {activeView === 'Configurações do Projeto' && <SettingsEditor projectSettings={projectSettings} setProjectSettings={setProjectSettings} />}
       </div>

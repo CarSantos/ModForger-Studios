@@ -4,7 +4,7 @@ import { useModStore } from '../../store/modStore';
 import { StructureIR } from '../../types/ir';
 import { generateRegistryName } from '../../lib/utils';
 
-export const WorldEditor = () => {
+export const WorldEditor = ({ setActiveView }: { setActiveView?: (view: string) => void }) => {
   const [activeTab, setActiveTab] = useState('biomes');
   const store = useModStore();
   const modId = store.projectSettings?.modId || 'mymod';
@@ -98,6 +98,7 @@ export const WorldEditor = () => {
                 if (activeTab === 'structures' && activeStruct) {
                   if (window.confirm(`Tem a certeza que deseja eliminar '${activeStruct.displayName}'?`)) {
                     store.deleteElement(activeStruct.id, 'structure');
+                    if (setActiveView) setActiveView('Dashboard');
                   }
                 } else {
                   alert("Apenas eliminação de estruturas suportada neste preview.");

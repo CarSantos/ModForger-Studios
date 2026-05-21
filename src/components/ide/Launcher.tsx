@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { Upload, X, Zap, Box, Settings, ChevronDown, FolderArchive, Loader2, Anvil } from 'lucide-react';
+import { Upload, X, Zap, Box, Settings, ChevronDown, FolderArchive, Loader2, Anvil, FolderOpen, Clock } from 'lucide-react';
 import JSZip from 'jszip';
+import { useModStore } from '../../store/modStore';
 
 interface LauncherProps {
   onStartProject: (settings: ProjectSettings) => void;
@@ -23,9 +24,39 @@ export const Launcher = ({ onStartProject }: LauncherProps) => {
 
   // MCreator Import state
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const workspaceInputRef = useRef<HTMLInputElement>(null);
+  const folderInputRef = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
   const [importProgress, setImportProgress] = useState(0);
   const [importStatus, setImportStatus] = useState('');
+
+  const [recentProjects, setRecentProjects] = useState<any[]>([]);
+
+  useEffect(() => {
+    const savedRecents = localStorage.getItem('modforger_recents');
+    if (savedRecents) {
+        try {
+            setRecentProjects(JSON.parse(savedRecents));
+        } catch (e) {
+            console.error('Error loading recent projects', e);
+        }
+    }
+  }, []);
+
+  const addRecentProject = (settings: any, workspaceState: any) => {
+    const newRecent = {
+        id: (settings.modId || 'project') + '_' + Date.now(),
+        name: settings.name || 'Projeto Sem Nome',
+        lastOpened: new Date().toISOString(),
+        state: workspaceState
+    };
+    // keep up to 5 actual distinct recents
+    setRecentProjects((prev) => {
+       const updated = [newRecent, ...prev.filter(p => p.name !== newRecent.name)].slice(0, 5);
+       localStorage.setItem('modforger_recents', JSON.stringify(updated));
+       return updated;
+    });
+  };
 
   const ALL_VERSIONS = [
     '26.2', '26.1.2', '26.1.1', '26.1', '1.21.11', '1.21.4', '1.21.3', '1.21.2', '1.21.1', '1.21', '1.20.6', '1.20.5', '1.20.4', '1.20.3', '1.20.2', '1.20.1', '1.20',
@@ -187,6 +218,58 @@ export const Launcher = ({ onStartProject }: LauncherProps) => {
     setDependencies(dependencies.filter((d) => d !== fileStr));
   };
 
+  const handleWorkspaceImport = (e: import('react').ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+       try {
+         const obj = JSON.parse(event.target?.result as string);
+         if (obj.projectSettings) {
+            useModStore.getState().loadWorkspace(obj);
+            addRecentProject(obj.projectSettings, obj);
+         } else {
+            alert('Ficheiro de workspace inválido.');
+         }
+       } catch (error) {
+         alert('Erro ao ler o ficheiro.');
+       }
+    };
+    reader.readAsText(file);
+  };
+  
+  const handleWorkspaceFolderImport = (e: import('react').ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    
+    // Look for workspace.json or typical ModForger save file
+    const workspaceFile = Array.from(files).find(f => f.name.endsWith('workspace.json') || f.name === 'workspace.json' || f.name === 'project_settings.json');
+    const isModForger = Array.from(files).some(f => f.name === 'build.gradle');
+    
+    if (workspaceFile) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const obj = JSON.parse(event.target?.result as string);
+                if (obj.projectSettings) {
+                    useModStore.getState().loadWorkspace(obj);
+                    addRecentProject(obj.projectSettings, obj);
+                } else {
+                    alert('Ficheiro de projeto inválido na pasta.');
+                }
+            } catch (error) {
+                alert('Erro ao ler a configuração do workspace.');
+            }
+        };
+        reader.readAsText(workspaceFile);
+    } else if (isModForger) {
+        alert("Pasta de ModForger detetada (contém build.gradle), mas sem ficheiro workspace.json. O ModForger-Studios web necessita do workspace.json para carregar o projeto completamente.");
+    } else {
+        alert("A pasta selecionada não parece ser um projeto válido do ModForger. Nenhum workspace.json ou build.gradle encontrado.");
+    }
+  };
+
   const loaders = [
     { id: 'forge', name: 'Forge', icon: <Box size={24} /> },
     { id: 'neoforge', name: 'NeoForge', icon: <Zap size={24} /> },
@@ -198,13 +281,78 @@ export const Launcher = ({ onStartProject }: LauncherProps) => {
       <div className="w-full max-w-4xl bg-[#0D0D11] border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row shadow-[0_0_50px_rgba(245,158,11,0.05)]">
         
         {/* Left Bar / Info */}
-        <div className="w-full md:w-1/3 bg-gradient-to-br from-amber-900/20 to-black/60 p-8 border-r border-white/5 flex flex-col items-center md:items-start text-center md:text-left">
-          <div className="w-16 h-16 mb-6 bg-gradient-to-br from-gray-600 to-gray-800 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(255,255,255,0.1)]">
+        <div className="w-full md:w-1/3 bg-gradient-to-br from-amber-900/20 to-black/60 p-8 border-r border-white/5 flex flex-col items-center md:items-start text-center md:text-left overflow-y-auto">
+          <div className="w-16 h-16 mb-4 bg-gradient-to-br from-gray-600 to-gray-800 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(255,255,255,0.1)] shrink-0">
             <Anvil size={32} className="text-white" />
           </div>
-          <h1 className="text-4xl font-extrabold tracking-tighter text-white mb-2 italic">ModForger<br/>Studios</h1>
+          <h1 className="text-4xl font-extrabold tracking-tighter text-white mb-8 italic shrink-0">ModForger<br/>Studios</h1>
           
-          <div className="mt-auto hidden md:block w-full">
+          <div className="w-full border-t border-white/10 pt-8 flex-col flex-1 shrink-0">
+             <h3 className="text-[11px] font-bold text-white/50 uppercase tracking-widest mb-4 flex items-center gap-2">
+               <Clock size={12} /> Workspaces Recentes
+             </h3>
+             
+             <div className="flex flex-col gap-2 mb-6">
+                {recentProjects.length > 0 ? (
+                  recentProjects.map(proj => (
+                    <button 
+                      key={proj.id}
+                      onClick={() => {
+                        if (proj.state) {
+                          useModStore.getState().loadWorkspace(proj.state);
+                          addRecentProject({ name: proj.name, modId: proj.id.split('_')[0] }, proj.state);
+                        }
+                      }}
+                      className="group flex flex-col items-start w-full bg-black/20 hover:bg-black/50 border border-white/5 rounded-lg p-3 transition-all text-left relative overflow-hidden"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-amber-500/0 via-amber-500/0 to-amber-500/5 group-hover:to-amber-500/10 transition-all"></div>
+                      <span className="text-sm font-bold text-white mb-1 truncate w-full relative z-10">{proj.name}</span>
+                      <span className="text-[10px] text-white/40 relative z-10">{new Date(proj.lastOpened).toLocaleString()}</span>
+                    </button>
+                  ))
+                ) : (
+                  <div className="text-xs text-white/20 text-center md:text-left py-2 font-mono italic">
+                    Nenhum projeto encotrado...
+                  </div>
+                )}
+             </div>
+
+             <div className="flex flex-col gap-2 mt-auto">
+                 <button 
+                   onClick={() => folderInputRef.current?.click()}
+                   className="w-full bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 text-xs px-4 py-2.5 rounded-lg flex items-center justify-center gap-2 transition-all font-medium"
+                 >
+                   <FolderOpen size={14} className="text-indigo-400" />
+                   Carregar Projeto (Pasta)
+                 </button>
+                 {/* @ts-ignore - webkitdirectory is perfectly valid in most modern browsers for picking folders */}
+                 <input 
+                   type="file" 
+                   ref={folderInputRef} 
+                   className="hidden" 
+                   webkitdirectory="true"
+                   directory="true"
+                   onChange={handleWorkspaceFolderImport} 
+                 />
+
+                 <button 
+                   onClick={() => workspaceInputRef.current?.click()}
+                   className="w-full bg-transparent hover:bg-white/5 text-white/60 hover:text-white border border-transparent hover:border-white/10 text-xs px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-all font-medium"
+                 >
+                   <FolderArchive size={14} />
+                   Abrir ficheiro (.json)
+                 </button>
+                 <input 
+                   type="file" 
+                   ref={workspaceInputRef} 
+                   className="hidden" 
+                   accept=".json" 
+                   onChange={handleWorkspaceImport} 
+                 />
+             </div>
+          </div>
+          
+          <div className="mt-8 hidden md:block w-full shrink-0">
             <div className="p-4 rounded-xl bg-black/40 border border-white/5 text-xs text-white/50 leading-relaxed font-mono">
               <div className="flex gap-2 mb-2">
                 <div className="w-2 h-2 rounded-full bg-red-500/50"></div>
@@ -226,10 +374,10 @@ export const Launcher = ({ onStartProject }: LauncherProps) => {
               <p className="text-white/40 text-sm">Define your project parameters to generate the <span className="font-mono text-amber-500/70">project_settings.json</span> configuration.</p>
             </div>
             
-            <div className="flex flex-col items-end shrink-0">
+            <div className="flex flex-col items-end shrink-0 gap-2">
                <button 
                  onClick={() => fileInputRef.current?.click()}
-                 disabled={importing || downloading}
+                 disabled={importing}
                  className="bg-white/5 hover:bg-white/10 text-white border border-white/10 text-xs px-4 py-2 rounded-lg flex items-center gap-2 transition-all font-medium"
                >
                  <FolderArchive size={14} className="text-emerald-400" />

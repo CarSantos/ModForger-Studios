@@ -10,6 +10,17 @@ export const TopBar = ({ projectSettings }: TopBarProps) => {
   const rootName = projectSettings?.name ? projectSettings.name.toLowerCase().replace(/\s+/g, '_') : 'mod-root';
   const setProjectSettings = useModStore(state => state.setProjectSettings);
 
+  const handleExportWorkspace = () => {
+    const state = useModStore.getState();
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", `${projectSettings?.name || 'mod'}_workspace.json`);
+    document.body.appendChild(downloadAnchorNode); 
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+  };
+
   return (
     <div className="h-14 bg-[#0F0F13] border-b border-white/10 flex items-center justify-between px-6 text-[#E2E2E9] shrink-0">
       <div className="flex items-center gap-4">
@@ -19,6 +30,13 @@ export const TopBar = ({ projectSettings }: TopBarProps) => {
           title="Fechar Projeto e Voltar à Página Inicial"
         >
           <FolderOpen size={14} /> Meus Projetos
+        </button>
+        <button 
+          onClick={handleExportWorkspace}
+          className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold rounded-md bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500/20 transition-colors"
+          title="Exportar Workspace (.json)"
+        >
+          Salvar Workspace
         </button>
         <div className="flex bg-white/5 rounded-md overflow-hidden p-1 gap-1 border border-white/5">
           <button className="px-3 py-1 text-xs font-medium rounded bg-white/10 text-white">Visual</button>

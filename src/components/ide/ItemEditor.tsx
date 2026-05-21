@@ -4,9 +4,8 @@ import { useModStore } from '../../store/modStore';
 import { ItemIR } from '../../types/ir';
 import { generateRegistryName } from '../../lib/utils';
 
-export const ItemEditor = () => {
+export const ItemEditor = ({ setActiveView }: { setActiveView?: (view: string) => void }) => {
   const store = useModStore();
-  const setActiveView = useModStore(state => state.setActiveView);
   const [activeItem, setActiveItem] = useState<ItemIR | null>(null);
   const [activeTab, setActiveTab] = useState('properties');
 
@@ -58,7 +57,7 @@ export const ItemEditor = () => {
     if (!activeItem) return;
     if (window.confirm(`Tem a certeza que deseja eliminar o item '${activeItem.displayName}'?`)) {
       store.deleteElement(activeItem.id, 'item');
-      setActiveView('Dashboard');
+      if (setActiveView) setActiveView('Dashboard');
     }
   };
 

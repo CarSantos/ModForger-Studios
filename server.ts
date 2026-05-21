@@ -6,6 +6,7 @@ import * as cheerio from "cheerio";
 import AdmZip from "adm-zip";
 import fs from "fs";
 import { fileURLToPath } from 'url';
+import { GoogleGenAI, Type } from '@google/genai';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,6 +16,37 @@ async function startServer() {
   const PORT = 3000;
 
   app.use(express.json());
+
+  // AI Endpoint for Generation via GenAI
+  app.post("/api/ai/generate", async (req, res) => {
+    try {
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) {
+        throw new Error('Chave da API Gemini não configurada no servidor (GEMINI_API_KEY).');
+      }
+
+      const ai = new GoogleGenAI({ apiKey });
+      const { prompt, systemInstruction, type } = req.body;
+
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+        config: {
+          systemInstruction: systemInstruction || "You are an expert Minecraft mod developer.",
+          responseMimeType: type === "json" ? "application/json" : "text/plain",
+          temperature: 0.3, // low temperature for code/json
+        }
+      });
+
+      let rawText = response.text;
+      if (!rawText) throw new Error("A IA retornou uma resposta vazia.");
+      
+      res.json({ success: true, text: rawText });
+    } catch (error: any) {
+      console.error("AI Generation Error", error.message);
+      res.status(500).json({ error: error.message || "Falha na geração com IA" });
+    }
+  });
 
   // API Route
   app.get("/api/health", (req, res) => {

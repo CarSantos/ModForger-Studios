@@ -1,7 +1,7 @@
 import { Crosshair, Box, ImageIcon } from 'lucide-react';
 import { useState } from 'react';
 
-export const ProjectileEditor = () => {
+export const ProjectileEditor = ({ setActiveView }: { setActiveView?: (view: string) => void }) => {
   const [name, setName] = useState('Projétil de Fogo');
   const [damage, setDamage] = useState(5);
   const [gravity, setGravity] = useState(true);

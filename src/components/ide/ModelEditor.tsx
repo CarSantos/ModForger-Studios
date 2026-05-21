@@ -2,7 +2,7 @@ import { Box, Play, Sparkles, Image as ImageIcon, Trash2, Save } from 'lucide-re
 import { useState } from 'react';
 import { generateRegistryName } from '../../lib/utils';
 
-export const ModelEditor = () => {
+export const ModelEditor = ({ setActiveView }: { setActiveView?: (view: string) => void }) => {
   const [displayName, setDisplayName] = useState('Novo Modelo');
   const [registryName, setRegistryName] = useState('mymod:novo_modelo');
 
